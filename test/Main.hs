@@ -30,11 +30,14 @@ testMoreComplexBackward = passed
     backwarded_graph = backward "d" graph
     computed_a_grad = grad $ getNombreFromId "a" backwarded_graph
     computed_b_grad = grad $ getNombreFromId "b" backwarded_graph
+    computed_c_grad = grad $ getNombreFromId "c" backwarded_graph
     expected_a_grad = 2 * value b * value b * value a
     expected_b_grad = 2 * value a * value a * value b
+    expected_c_grad = 2 * value c
     correct_a_grad = computed_a_grad == expected_a_grad
     correct_b_grad = computed_b_grad == expected_b_grad
-    passed = correct_a_grad && correct_b_grad
+    correct_c_grad = computed_c_grad == expected_c_grad
+    passed = correct_a_grad && correct_b_grad && correct_c_grad
 
 main :: IO ()
 main = do
