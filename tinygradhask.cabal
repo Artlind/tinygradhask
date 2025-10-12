@@ -68,7 +68,7 @@ library
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0
+    build-depends:    base >=4.14 && <4.22, unordered-containers, containers
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -100,5 +100,8 @@ test-suite tinygradhask-test
 
     -- Test dependencies.
     build-depends:
-        base ^>=4.18.3.0,
-        tinygradhask
+        base >=4.14 && <4.22,
+        tinygradhask,
+        unordered-containers,
+        containers
+
