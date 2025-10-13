@@ -18,7 +18,6 @@ data Nombre = Nombre
   }
   deriving (Eq, Show)
 
--- | Lets try to copy pytorch ie no forward gradients computation, goal is to implement only backward
 instance Num Nombre where
   Nombre a _ n1 _ _ + Nombre c _ n2 _ _ = Nombre (a + c) 0 (n1 ++ "+" ++ n2) [n1, n2] Add
   Nombre a _ n1 _ _ * Nombre c _ n2 _ _ = Nombre (a * c) 0 ("(" ++ n1 ++ ")" ++ "*" ++ "(" ++ n2 ++ ")") [n1, n2] Mult
@@ -91,7 +90,7 @@ addGradients nombres = added
     added = Nombre (value nombre_1) (sum [grad n | n <- nombres]) (nombre_id nombre_1) (parents nombre_1) (operation nombre_1)
 
 mergeGraphs :: [Graph] -> Graph
-mergeGraphs graphs = merged_graphs -- = head graphs
+mergeGraphs graphs = merged_graphs
   where
     all_unique_ids :: Set.Set NodeId
     all_unique_ids = Set.fromList (concat [HM.keys (nodes graph) | graph <- graphs])
@@ -103,7 +102,6 @@ backwardInner child_id graph
   | otherwise = addNodeToGraph child (removeNodeFromGraph child (mergeGraphs graph_parents))
   where
     child = getNombreFromId child_id graph
-    -- new_child = Nombre (value child) (1.0 + grad child) child_id (parents child) (operation child) -- See this weird 1.0
     backwarded_parents = backwardParents child graph
     graph_parents = [backwardInner (nombre_id nod) (overwriteNode graph nod) | nod <- backwarded_parents]
 
