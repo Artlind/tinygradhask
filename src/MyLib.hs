@@ -4,7 +4,7 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Set as Set
 
 -- | Some kind of autograd in Haskell
-data Operation = Add | Mult | Rien
+data Operation = Add | Mult | Rien | Div
   deriving (Eq, Show)
 
 type NodeId = String
@@ -25,6 +25,11 @@ instance Num Nombre where
   abs (Nombre a _ n1 _ _) = Nombre (abs a) 0 ("abs(" ++ n1 ++ ")") [n1, show (signum a)] Mult
   negate (Nombre a _ n1 _ _) = Nombre (-a) 0 ("-(" ++ n1 ++ ")") [n1, "-1"] Mult
   signum (Nombre a _ n1 _ _) = Nombre (signum a) 0 ("signum(" ++ n1 ++ ")") [] Rien
+
+instance Fractional Nombre where
+  (Nombre a _ n1 _ _) / (Nombre b _ n2 _ _) = Nombre (a / b) 0 (n1 ++ "/" ++ n2) [n1, n2] Div
+  recip (Nombre a _ n1 _ _) = Nombre (1 / a) 0 ("1/" ++ n1) ["1", n1] Div
+  fromRational r = Nombre (fromRational r) 0 (show r) [] Rien
 
 newNombreWithId :: (NodeId, Nombre) -> Nombre
 newNombreWithId (new_id, n) = Nombre (value n) (grad n) new_id (parents n) (operation n)
@@ -77,6 +82,14 @@ backwardParents n graph = new_node_parents
             parent_2 = last nodeparents
          in [ Nombre (value parent_1) (grad parent_1 + value parent_2 * grad_child) (nombre_id parent_1) (parents parent_1) (operation parent_1),
               Nombre (value parent_2) (grad parent_2 + value parent_1 * grad_child) (nombre_id parent_2) (parents parent_2) (operation parent_2)
+            ]
+      Div ->
+        let parent_num :: Nombre
+            parent_num = head nodeparents
+            parent_den :: Nombre
+            parent_den = last nodeparents
+         in [ Nombre (value parent_den) (grad parent_den - (grad_child * value parent_num / value parent_den ** 2)) (nombre_id parent_den) (parents parent_den) (operation parent_den),
+              Nombre (value parent_num) (grad parent_num + grad_child / value parent_den) (nombre_id parent_num) (parents parent_num) (operation parent_num)
             ]
       where
         parentsn = parents n
