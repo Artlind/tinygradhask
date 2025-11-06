@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, newMatrix2d, randMatrix2d) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices) where
 
 import Common
 import Nombres
@@ -14,7 +14,7 @@ allSame [] = True
 allSame (x : xs) = all (== x) xs
 
 isRectangle :: [[Nombre]] -> Maybe [[Nombre]]
-isRectangle rows -- = [length row | row<- rows]
+isRectangle rows
   | all_rows_equal_len = Just rows
   | otherwise = Nothing
   where
@@ -52,5 +52,13 @@ rand2dList (m, n) range key = do
 randMatrix2d :: NodeId -> (Int, Int) -> (Double, Double) -> StdGen -> Maybe (Matrix2d, StdGen)
 randMatrix2d name shape range key = do
   (rand_numbers, new_key) <- rand2dList shape range key
-  result <- newMatrix2d [[createNombre (name ++ show i ++ show j, rand_numbers !! i !! j) | j <- [0 .. length (rand_numbers !! i) - 1]] | i <- [0 .. length rand_numbers - 1]]
+  result <- newMatrix2d [[createNombre (name ++ "_" ++ show i ++ "_" ++ show j, rand_numbers !! i !! j) | j <- [0 .. length (rand_numbers !! i) - 1]] | i <- [0 .. length rand_numbers - 1]]
   return (result, new_key)
+
+addMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d
+addMatrices m1 m2
+  | shape1 /= shape2 = Nothing
+  | otherwise = newMatrix2d $ zipWith (zipWith (+)) (coeffs m1) (coeffs m2)
+  where
+    shape1 = (length (coeffs m1), length (head (coeffs m1)))
+    shape2 = (length (coeffs m2), length (head (coeffs m2)))
