@@ -62,13 +62,13 @@ library
     exposed-modules:  MyLib
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules: Common, Nombres, Graphs, Matrices
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base >=4.14 && <4.22, unordered-containers, containers
+    build-depends:    base >=4.14 && <4.22, unordered-containers, containers, random >=1.2
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -103,5 +103,6 @@ test-suite tinygradhask-test
         base >=4.14 && <4.22,
         tinygradhask,
         unordered-containers,
-        containers
+        containers,
+        random >=1.2
 
