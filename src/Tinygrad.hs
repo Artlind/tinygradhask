@@ -1,4 +1,4 @@
-module MyLib (Operation, Nombre (..), Graph (..), backward, getNombreFromId, createNombre, newNombreWithId) where
+module Tinygrad (Operation, Nombre (..), Graph (..), backward, getNombreFromId, createNombre, newNombreWithId) where
 
 import Common
 import qualified Data.HashMap.Strict as HM

@@ -1,7 +1,7 @@
 module Main (main) where
 
 import qualified Data.HashMap.Strict as HM
-import MyLib
+import Tinygrad
 
 testSimpleBackward :: Bool
 testSimpleBackward = passed
