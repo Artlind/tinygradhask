@@ -1,4 +1,4 @@
-module Nombres (Nombre (..), createNombre, newNombreWithId) where
+module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre) where
 
 import Common
 
@@ -29,3 +29,11 @@ newNombreWithId (new_id, n) = Nombre (value n) (grad n) new_id (parents n) (oper
 
 createNombre :: (NodeId, Double) -> Nombre
 createNombre (nid, x) = Nombre x 0.0 nid [] Rien
+
+sumNombre :: [Nombre] -> Nombre
+sumNombre [] = 0 :: Nombre
+sumNombre nombres = Nombre (value rawsum) 0 name all_ids Sum
+  where
+    rawsum = head nombres + sumNombre (tail nombres)
+    all_ids = [nombre_id n | n <- nombres]
+    name = concatMap (++ "+") all_ids

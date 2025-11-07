@@ -93,6 +93,37 @@ testaddMatrices = passed
     has_correct_shape_and_range = checkMatShapeAndRangeNoKey m4 (3, 2) (-2, 2)
     passed = isNothing m5 && isJust m4 && has_correct_shape_and_range
 
+testSumBackward :: Bool
+testSumBackward =
+  let a = createNombre ("a", 2)
+      b = createNombre ("b", 3)
+      c = createNombre ("c", 4)
+      d = newNombreWithId ("d", sumNombre [a, b, c])
+      e = newNombreWithId ("e", d * d)
+      graph = Graph (HM.fromList [(nombre_id node, node) | node <- [a, b, c, d, e]])
+      backwarded_graph = backward "d" graph
+      computed_a_grad = grad $ getNombreFromId "a" backwarded_graph
+      computed_b_grad = grad $ getNombreFromId "b" backwarded_graph
+      computed_c_grad = grad $ getNombreFromId "c" backwarded_graph
+      expected_a_grad = 1
+      expected_b_grad = 1
+      expected_c_grad = 1
+      correct_a_grad = computed_a_grad == expected_a_grad
+      correct_b_grad = computed_b_grad == expected_b_grad
+      correct_c_grad = computed_c_grad == expected_c_grad
+
+      backwarded_e_graph = backward "e" graph
+      computed_a_grad_e = grad $ getNombreFromId "a" backwarded_e_graph
+      computed_b_grad_e = grad $ getNombreFromId "b" backwarded_e_graph
+      computed_c_grad_e = grad $ getNombreFromId "c" backwarded_e_graph
+      expected_a_grad_e = 2 * value d -- a**2 + 2*ab + 2* ac + 2*bc => 2a+2b+2c
+      expected_b_grad_e = 2 * value d
+      expected_c_grad_e = 2 * value d
+      correct_a_grad_e = computed_a_grad_e == expected_a_grad_e
+      correct_b_grad_e = computed_b_grad_e == expected_b_grad_e
+      correct_c_grad_e = computed_c_grad_e == expected_c_grad_e
+   in (value d == 9.0) && correct_a_grad && correct_b_grad && correct_c_grad && correct_a_grad_e && correct_b_grad_e && correct_c_grad_e
+
 main :: IO ()
 main = do
   if testSimpleBackwardPassed
@@ -110,6 +141,9 @@ main = do
   if testaddMatrices
     then putStrLn "PASSED test testaddMatrices"
     else putStrLn "FAILED test testaddMatrices"
+  if testSumBackward
+    then putStrLn "PASSED test testSumBackward"
+    else putStrLn "FAILED test testSumBackward"
   where
     testSimpleBackwardPassed = testSimpleBackward
     testMoreComplexBackwardPassed = testMoreComplexBackward

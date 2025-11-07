@@ -1,4 +1,4 @@
-module Tinygrad (Operation, Nombre (..), Graph (..), backward, getNombreFromId, createNombre, newNombreWithId) where
+module Tinygrad (Operation, Nombre (..), Graph (..), backward, getNombreFromId, createNombre, newNombreWithId, sumNombre) where
 
 import Common
 import qualified Data.HashMap.Strict as HM
@@ -11,6 +11,9 @@ backwardParents n graph = new_node_parents
     op = operation n
     new_node_parents = case op of
       Rien -> []
+      Sum ->
+        let
+         in [Nombre (value nod) (grad nod + grad_child) (nombre_id nod) (parents nod) (operation nod) | nod <- nodeparents]
       Add ->
         let
          in [Nombre (value nod) (grad nod + grad_child) (nombre_id nod) (parents nod) (operation nod) | nod <- nodeparents]

@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices) where
 
 import Common
 import Nombres
@@ -62,3 +62,14 @@ addMatrices m1 m2
   where
     shape1 = (length (coeffs m1), length (head (coeffs m1)))
     shape2 = (length (coeffs m2), length (head (coeffs m2)))
+
+multMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d
+multMatrices m1 m2
+  | cols1 /= rows2 = Nothing
+  -- problem : save intermediate compute into the graph...
+  | otherwise = newMatrix2d [[sumNombre [coeffs m1 !! i !! k * coeffs m2 !! k !! j | k <- [0 .. rows1 - 1]] | j <- [0 .. cols2 - 1]] | i <- [0 .. rows1 - 1]]
+  where
+    rows1 = length (coeffs m1)
+    cols1 = length (head (coeffs m1))
+    rows2 = length (coeffs m2)
+    cols2 = length (head (coeffs m2))
