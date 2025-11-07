@@ -1,4 +1,4 @@
-module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre) where
+module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct) where
 
 import Common
 
@@ -37,3 +37,13 @@ sumNombre nombres = Nombre (value rawsum) 0 name all_ids Sum
     rawsum = head nombres + sumNombre (tail nombres)
     all_ids = [nombre_id n | n <- nombres]
     name = concatMap (++ "+") all_ids
+
+dotProduct :: [Nombre] -> [Nombre] -> Nombre
+dotProduct n1s n2s
+  | l1 /= l2 = error $ "Lists of different sizes " ++ show l1 ++ " vs " ++ show l2
+  | otherwise = Nombre (value computed_nombre) 0 (nombre_id computed_nombre) (concat [[nombre_id (n1s !! i), nombre_id (n2s !! i)] | i <- [0 .. l1 - 1]]) DotProd
+  where
+    l1 = length n1s
+    l2 = length n2s
+    minls = min l1 l2
+    computed_nombre = sumNombre [n1s !! i * n2s !! i | i <- [0 .. minls - 1]]

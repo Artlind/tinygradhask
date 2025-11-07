@@ -1,4 +1,4 @@
-module Tinygrad (Operation, Nombre (..), Graph (..), backward, getNombreFromId, createNombre, newNombreWithId, sumNombre) where
+module Tinygrad (Operation, Nombre (..), Graph (..), backward, getNombreFromId, createNombre, newNombreWithId, sumNombre, dotProduct) where
 
 import Common
 import qualified Data.HashMap.Strict as HM
@@ -11,6 +11,11 @@ backwardParents n graph = new_node_parents
     op = operation n
     new_node_parents = case op of
       Rien -> []
+      DotProd ->
+        let evens = [nod | (i, nod) <- zip [0 ..] nodeparents, even (i :: Int)]
+            odds = [nod | (i, nod) <- zip [0 ..] nodeparents, odd (i :: Int)]
+            result = concat [[Nombre (value ev) (grad ev + value od * grad_child) (nombre_id ev) (parents ev) (operation ev), Nombre (value od) (grad od + value ev * grad_child) (nombre_id od) (parents od) (operation od)] | (ev, od) <- zip evens odds]
+         in result
       Sum ->
         let
          in [Nombre (value nod) (grad nod + grad_child) (nombre_id nod) (parents nod) (operation nod) | nod <- nodeparents]
