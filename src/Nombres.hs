@@ -1,4 +1,4 @@
-module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct) where
+module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct, tanH) where
 
 import Common
 
@@ -47,3 +47,6 @@ dotProduct n1s n2s
     l2 = length n2s
     minls = min l1 l2
     computed_nombre = sumNombre [n1s !! i * n2s !! i | i <- [0 .. minls - 1]]
+
+tanH :: Nombre -> Nombre
+tanH n = Nombre (tanh (value n)) 0 ("tanh(" ++ nombre_id n ++ ")") [nombre_id n] TanH

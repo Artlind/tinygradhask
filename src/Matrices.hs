@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d ) where
 
 import Common
 import Nombres
@@ -28,6 +28,12 @@ newMatrix2d rows =
   where
     is_rectangle :: Maybe [[Nombre]]
     is_rectangle = isRectangle rows
+
+suffixParamsMatrix2d :: NodeId -> Matrix2d -> Matrix2d
+suffixParamsMatrix2d name mat = Matrix2d [[newNombreWithId (nombre_id n ++ name, n) | n <- row] | row <- coeffs mat]
+
+emptyMatrix2d :: Matrix2d
+emptyMatrix2d = Matrix2d [[]]
 
 randList :: (Random a) => Int -> (a, a) -> StdGen -> Maybe ([a], StdGen)
 randList n _ _ | n < 0 = Nothing
@@ -72,6 +78,9 @@ multMatrices m1 m2
     cols1 = length (head (coeffs m1))
     rows2 = length (coeffs m2)
     cols2 = length (head (coeffs m2))
+
+applyTanh :: Matrix2d -> Matrix2d
+applyTanh m = Matrix2d [[tanH n | n <- row] | row <- coeffs m]
 
 allParamsFromMatrix :: Matrix2d -> [Nombre]
 allParamsFromMatrix m = concat (coeffs m)

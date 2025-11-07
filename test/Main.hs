@@ -165,6 +165,17 @@ testDotProductBackward =
       correct_e_grad_f = computed_e_grad_f == expected_e_grad_f
    in (value e == 23.0) && correct_a_grad && correct_b_grad && correct_c_grad && correct_d_grad && correct_a_grad_f && correct_b_grad_f && correct_c_grad_f && correct_d_grad_f && correct_e_grad_f
 
+testtanH :: Bool
+testtanH = passed
+  where
+    (m3, _) = fromJust $ randMatrix2d "m3" (3, 3) (-1, 1) (mkStdGen 42)
+    tanned_m3 = fromJust $ newMatrix2d [[tanH n | n <- row] | row <- coeffs m3]
+    summed = sumNombre (concat (coeffs tanned_m3))
+    all_nombres = [summed] ++ concat (coeffs tanned_m3) ++ concat (coeffs m3)
+    graph = Graph (HM.fromList [(nombre_id node, node) | node <- all_nombres])
+    backwarded_graphsum = backward (nombre_id summed) graph
+    passed = all and ([[grad (getNombreFromId (nombre_id n) backwarded_graphsum) == (1 - tanh (value n) ** 2) | n <- row] | row <- coeffs m3])
+
 main :: IO ()
 main = do
   if testSimpleBackwardPassed
@@ -186,8 +197,11 @@ main = do
     then putStrLn "PASSED test testSumBackward"
     else putStrLn "FAILED test testSumBackward"
   if testDotProductBackward
-    then putStrLn "PASSED test testDotProductBackward "
-    else putStrLn "FAILED test testDotProductBackward "
+    then putStrLn "PASSED test testDotProductBackward"
+    else putStrLn "FAILED test testDotProductBackward"
+  if testtanH
+    then putStrLn "PASSED test testtanH"
+    else putStrLn "FAILED test testtanH"
   where
     testSimpleBackwardPassed = testSimpleBackward
     testMoreComplexBackwardPassed = testMoreComplexBackward
