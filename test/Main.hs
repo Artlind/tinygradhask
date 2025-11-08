@@ -3,6 +3,7 @@ module Main (main) where
 import qualified Data.HashMap.Strict as HM
 import Data.Maybe (fromJust, isJust, isNothing)
 import Matrices
+import Mlp
 import System.Random (StdGen, mkStdGen)
 import Tinygrad
 
@@ -176,6 +177,36 @@ testtanH = passed
     backwarded_graphsum = backward (nombre_id summed) graph
     passed = all and ([[grad (getNombreFromId (nombre_id n) backwarded_graphsum) == (1 - tanh (value n) ** 2) | n <- row] | row <- coeffs m3])
 
+testMlp :: Bool
+testMlp = passed
+  where
+    model = fromJust $ newRandomMlp [(3, 5, -1, 1, mkStdGen 42), (5, 1, -1, 1, mkStdGen 43)]
+    (rand_inputs, _) = fromJust $ randMatrix2d "m3" (3, 3) (-1, 1) (mkStdGen 44)
+    mlp_output = fromJust $ forwardMlp model rand_inputs
+    hs = hidden_states mlp_output
+    ot = output_tensor mlp_output
+    correct_n_hidden = length hs == 1
+    correct_ot_dim = (length (coeffs ot), length (head (coeffs ot))) == (3, 1)
+    passed = correct_n_hidden && correct_ot_dim
+
+testMSE :: Bool
+testMSE = passed
+  where
+    (m1, _) = fromJust $ randMatrix2d "m1" (3, 2) (-1, 1) (mkStdGen 42)
+    (m2, _) = fromJust $ randMatrix2d "m2" (3, 2) (-1, 1) (mkStdGen 43)
+    ses = fromJust $ meanSquaredError m1 m2
+    correct_ses_dim = (length (coeffs ses), length (head (coeffs ses))) == (3, 2)
+    correct_values = all and ([[value n3 == (value n1 - value n2) ** 2 | (n1, n2, n3) <- zip3 row1 row2 row3] | (row1, row2, row3) <- zip3 (coeffs m1) (coeffs m2) (coeffs ses)])
+    sum_ses = sumNombre (allParamsFromMatrix ses)
+
+    -- factor = 6 :: Nombre
+    -- actual_mse = sum_ses / factor
+    graph = Graph (HM.fromList [(nombre_id node, node) | node <- concat [allParamsFromMatrix m1, allParamsFromMatrix m2, allParamsFromMatrix ses, [sum_ses]]])
+    backwarded_graph = backward (nombre_id sum_ses) graph
+    correct_grads = all and ([[grad (getNombreFromId (nombre_id n1) backwarded_graph) == 2 * (value n1 - value n2) | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs m1) (coeffs m2)])
+
+    passed = correct_ses_dim && correct_values && correct_grads
+
 main :: IO ()
 main = do
   if testSimpleBackwardPassed
@@ -202,6 +233,12 @@ main = do
   if testtanH
     then putStrLn "PASSED test testtanH"
     else putStrLn "FAILED test testtanH"
+  if testMlp
+    then putStrLn "PASSED test testMlp"
+    else putStrLn "FAILED test testMlp"
+  if testMSE
+    then putStrLn "PASSED test testMSE"
+    else putStrLn "FAILED test testMSE"
   where
     testSimpleBackwardPassed = testSimpleBackward
     testMoreComplexBackwardPassed = testMoreComplexBackward

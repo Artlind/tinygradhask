@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d ) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError) where
 
 import Common
 import Nombres
@@ -30,7 +30,7 @@ newMatrix2d rows =
     is_rectangle = isRectangle rows
 
 suffixParamsMatrix2d :: NodeId -> Matrix2d -> Matrix2d
-suffixParamsMatrix2d name mat = Matrix2d [[newNombreWithId (nombre_id n ++ name, n) | n <- row] | row <- coeffs mat]
+suffixParamsMatrix2d name mat = Matrix2d [[newNombreWithId (nombre_id n ++ "_" ++ name, n) | n <- row] | row <- coeffs mat]
 
 emptyMatrix2d :: Matrix2d
 emptyMatrix2d = Matrix2d [[]]
@@ -84,3 +84,11 @@ applyTanh m = Matrix2d [[tanH n | n <- row] | row <- coeffs m]
 
 allParamsFromMatrix :: Matrix2d -> [Nombre]
 allParamsFromMatrix m = concat (coeffs m)
+
+meanSquaredError :: Matrix2d -> Matrix2d -> Maybe Matrix2d
+meanSquaredError m1 m2
+  | shape1 /= shape2 = Nothing
+  | otherwise = newMatrix2d [[mse n1 n2 | (n1, n2) <- zip r1 r2] | (r1, r2) <- zip (coeffs m1) (coeffs m2)]
+  where
+    shape1 = (length (coeffs m1), length (head (coeffs m1)))
+    shape2 = (length (coeffs m2), length (head (coeffs m2)))

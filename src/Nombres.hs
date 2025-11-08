@@ -1,4 +1,4 @@
-module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct, tanH) where
+module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct, tanH, mse) where
 
 import Common
 
@@ -50,3 +50,6 @@ dotProduct n1s n2s
 
 tanH :: Nombre -> Nombre
 tanH n = Nombre (tanh (value n)) 0 ("tanh(" ++ nombre_id n ++ ")") [nombre_id n] TanH
+
+mse :: Nombre -> Nombre -> Nombre
+mse n1 n2 = Nombre ((value n1 - value n2) ** 2) 0 ("MSE(" ++ nombre_id n1 ++ "," ++ nombre_id n2) [nombre_id n1, nombre_id n2] MSE

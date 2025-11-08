@@ -1,4 +1,4 @@
-module Mlp (Mlp, newMlp, forwardMlp, newRandomMlp) where
+module Mlp (Mlp, newMlp, forwardMlp, newRandomMlp, MlpOutput (..)) where
 
 import Matrices
 import System.Random (StdGen)
@@ -47,7 +47,7 @@ forwardMlp (Mlp [mat]) inp =
     Just t -> Just (MlpOutput [] t)
   where
     first_mult :: Maybe Matrix2d
-    first_mult = multMatrices mat inp
+    first_mult = multMatrices inp mat
 forwardMlp model inp =
   case first_mult of
     Nothing -> Nothing
@@ -58,7 +58,7 @@ forwardMlp model inp =
             Just rest -> Just $ MlpOutput (first_layer_hidden : hidden_states rest) (output_tensor rest)
   where
     first_mult :: Maybe Matrix2d
-    first_mult = multMatrices (head (layers model)) inp
+    first_mult = multMatrices inp (head (layers model))
 
 nameLayersBasedOnOrder :: Mlp -> Mlp
 nameLayersBasedOnOrder model = Mlp [suffixParamsMatrix2d (show i) layer | (i, layer) <- zip [0 .. length (layers model) - 1] (layers model)]

@@ -1,4 +1,4 @@
-module Graphs (Graph (..), getNombreFromId, overwriteNode, addNodeToGraph, removeNodeFromGraph, mergeGraphs) where
+module Graphs (Graph (..), getNombreFromId, overwriteNode, addNodeToGraph, removeNodeFromGraph, mergeGraphs, makeGradStep) where
 
 import Common
 import qualified Data.HashMap.Strict as HM
@@ -46,3 +46,9 @@ mergeGraphs graphs = merged_graphs
     all_unique_ids :: Set.Set NodeId
     all_unique_ids = Set.fromList (concat [HM.keys (nodes graph) | graph <- graphs])
     merged_graphs = Graph (HM.fromList [(nid, addGradients [getNombreFromId nid graph | graph <- graphs]) | nid <- Set.toList all_unique_ids])
+
+makeGradStep :: Graph -> Double -> Graph
+makeGradStep graph learning_rate = new_graph
+  where
+    old_nodes = HM.toList (nodes graph)
+    new_graph = Graph (HM.fromList [(nid, Nombre (value n - learning_rate * grad n) (grad n) (nombre_id n) (parents n) (operation n)) | (nid, n) <- old_nodes])

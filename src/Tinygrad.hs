@@ -10,7 +10,15 @@ backwardParents n graph = new_node_parents
   where
     op = operation n
     new_node_parents = case op of
-      Rien -> []
+      Rien -> nodeparents
+      MSE ->
+        let parent_1 :: Nombre
+            parent_1 = head nodeparents
+            parent_2 :: Nombre
+            parent_2 = last nodeparents
+         in [ Nombre (value parent_1) (grad parent_1 + 2 * (value parent_1 - value parent_2) * grad_child) (nombre_id parent_1) (parents parent_1) (operation parent_1),
+              Nombre (value parent_2) (grad parent_2 + 2 * (value parent_2 - value parent_1) * grad_child) (nombre_id parent_2) (parents parent_2) (operation parent_2)
+            ]
       TanH ->
         let
          in [Nombre (value nod) (grad nod + (1 - tanh (value nod) ** 2) * grad_child) (nombre_id nod) (parents nod) (operation nod) | nod <- nodeparents]
