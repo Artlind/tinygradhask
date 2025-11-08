@@ -1,7 +1,10 @@
-module Mlp (Mlp, newMlp, forwardMlp, newRandomMlp, MlpOutput (..)) where
+module Mlp (Mlp, newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch) where
 
+import qualified Data.HashMap.Strict as HM
+import Graphs
 import Matrices
 import System.Random (StdGen)
+import Tinygrad
 
 newtype Mlp = Mlp
   { layers :: [Matrix2d]
@@ -74,3 +77,29 @@ newRandomMlp dims_and_ranges = do
   rest <- newRandomMlp (tail dims_and_ranges)
   mlp <- newMlp (mat : layers rest)
   return (nameLayersBasedOnOrder mlp)
+
+updateModelWithGraph :: Mlp -> Graph -> Mlp
+updateModelWithGraph model graph = new_model
+  where
+    new_model = Mlp [updateMatrixWithGraph mat graph | mat <- layers model]
+
+allParamsFromModel :: Mlp -> [Nombre]
+allParamsFromModel model = concat [allParamsFromMatrix layer | layer <- layers model]
+
+fitBatch :: Mlp -> (Matrix2d, Matrix2d) -> Double -> Mlp
+fitBatch model (inp, labels) lr =
+  case out of
+    Nothing -> model
+    Just (MlpOutput hidds ot) ->
+      let ses = meanSquaredError ot labels
+       in case ses of
+            Nothing -> model
+            Just mat ->
+              let sum_ses = sumNombre (allParamsFromMatrix mat)
+                  graph = Graph (HM.fromList [(nombre_id node, node) | node <- concat [[sum_ses], allParamsFromMatrix mat, allParamsFromMatrix ot, concat [allParamsFromMatrix hid | hid <- hidds], allParamsFromModel model]])
+                  backwarded_graph = backward (nombre_id sum_ses) graph
+                  grad_steped_graph = makeGradStep backwarded_graph lr
+                  new_model = updateModelWithGraph model grad_steped_graph
+               in new_model
+  where
+    out = forwardMlp model inp

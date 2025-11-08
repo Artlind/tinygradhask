@@ -1,6 +1,7 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph) where
 
 import Common
+import Graphs
 import Nombres
 import System.Random (Random, StdGen, randomR)
 
@@ -92,3 +93,10 @@ meanSquaredError m1 m2
   where
     shape1 = (length (coeffs m1), length (head (coeffs m1)))
     shape2 = (length (coeffs m2), length (head (coeffs m2)))
+
+updateMatrixWithGraph :: Matrix2d -> Graph -> Matrix2d
+updateMatrixWithGraph (Matrix2d []) _ = Matrix2d []
+updateMatrixWithGraph (Matrix2d [[]]) _ = Matrix2d [[]]
+updateMatrixWithGraph (Matrix2d rows) graph = new_matrix2d
+  where
+    new_matrix2d = Matrix2d ([getNombreFromId (nombre_id n) graph | n <- head rows] : coeffs (updateMatrixWithGraph (Matrix2d (tail rows)) graph))
