@@ -62,13 +62,13 @@ forwardMlp (Mlp (layer1 : others)) inp =
 nameLayersBasedOnOrder :: Mlp -> Mlp
 nameLayersBasedOnOrder model = Mlp [suffixParamsMatrix2d (show i) layer | (i, layer) <- zip [0 .. length (layers model) - 1] (layers model)]
 
-newRandomMlp :: [(Int, Int, Double, Double, StdGen)] -> Maybe Mlp
+newRandomMlp :: [(Shape, Range, StdGen)] -> Maybe Mlp
 newRandomMlp [] = Just (Mlp [])
-newRandomMlp [(indim, outdim, minrange, maxrange, key)] = do
+newRandomMlp [((indim, outdim), (minrange, maxrange), key)] = do
   (mat, _) <- randMatrix2d "layer" (indim, outdim) (minrange, maxrange) key
   newMlp [mat]
 newRandomMlp dims_and_ranges = do
-  let (indim, outdim, minrange, maxrange, key) = head dims_and_ranges
+  let ((indim, outdim), (minrange, maxrange), key) = head dims_and_ranges
   (mat, _) <- randMatrix2d "layer" (indim, outdim) (minrange, maxrange) key
   rest <- newRandomMlp (tail dims_and_ranges)
   mlp <- newMlp (mat : layers rest)
