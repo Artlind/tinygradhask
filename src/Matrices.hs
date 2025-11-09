@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range) where
 
 import Common
 import Graphs
@@ -55,8 +55,12 @@ rand2dList (m, n) range key = do
   (randRows, others_key) <- rand2dList (m - 1, n) range new_key
   return (randRow : randRows, others_key)
 
+type Shape = (Int, Int)
+
+type Range = (Double, Double)
+
 -- Convenience function to create a random 2d matrix kinda nice
-randMatrix2d :: NodeId -> (Int, Int) -> (Double, Double) -> StdGen -> Maybe (Matrix2d, StdGen)
+randMatrix2d :: NodeId -> Shape -> Range -> StdGen -> Maybe (Matrix2d, StdGen)
 randMatrix2d name shape range key = do
   (rand_numbers, new_key) <- rand2dList shape range key
   result <- newMatrix2d [[createNombre (name ++ "_" ++ show i ++ "_" ++ show j, rand_numbers !! i !! j) | j <- [0 .. length (rand_numbers !! i) - 1]] | i <- [0 .. length rand_numbers - 1]]
