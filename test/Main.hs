@@ -177,16 +177,31 @@ testtanH = passed
     backwarded_graphsum = backward (nombre_id summed) graph
     passed = all and ([[grad (getNombreFromId (nombre_id n) backwarded_graphsum) == (1 - tanh (value n) ** 2) | n <- row] | row <- coeffs m3])
 
+testSingleMlp :: Bool
+testSingleMlp = passed
+  where
+    (mat, _) = fromJust $ randMatrix2d "layer" (3, 5) (-1, 1) (mkStdGen 42)
+    model = Mlp [mat]
+    (rand_inputs, _) = fromJust $ randMatrix2d "m3" (2, 3) (-1, 1) (mkStdGen 44)
+    mlp_output = fromJust $ forwardMlp model rand_inputs
+    res_matmul = fromJust $ multMatrices rand_inputs mat
+    hs = hidden_states mlp_output
+    ot = output_tensor mlp_output
+    correct_n_hidden = null hs
+    correct_ot_vals = all and [[value n1 == value n2 | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs res_matmul) (coeffs ot)]
+
+    passed = correct_n_hidden && correct_ot_vals
+
 testMlp :: Bool
 testMlp = passed
   where
     model = fromJust $ newRandomMlp [(3, 5, -1, 1, mkStdGen 42), (5, 1, -1, 1, mkStdGen 43)]
-    (rand_inputs, _) = fromJust $ randMatrix2d "m3" (3, 3) (-1, 1) (mkStdGen 44)
+    (rand_inputs, _) = fromJust $ randMatrix2d "m3" (2, 3) (-1, 1) (mkStdGen 44)
     mlp_output = fromJust $ forwardMlp model rand_inputs
     hs = hidden_states mlp_output
     ot = output_tensor mlp_output
     correct_n_hidden = length hs == 1
-    correct_ot_dim = (length (coeffs ot), length (head (coeffs ot))) == (3, 1)
+    correct_ot_dim = (length (coeffs ot), length (head (coeffs ot))) == (2, 1)
     passed = correct_n_hidden && correct_ot_dim
 
 testMSE :: Bool
@@ -206,6 +221,24 @@ testMSE = passed
     correct_grads = all and ([[grad (getNombreFromId (nombre_id n1) backwarded_graph) == 2 * (value n1 - value n2) | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs m1) (coeffs m2)])
 
     passed = correct_ses_dim && correct_values && correct_grads
+
+testFitBatch :: Bool
+testFitBatch = passed
+  where
+    model = fromJust $ newRandomMlp [(3, 5, -1, 1, mkStdGen 42), (5, 1, -1, 1, mkStdGen 43)]
+    (rand_input, _) = fromJust $ randMatrix2d "rand_input" (3, 3) (-1, 1) (mkStdGen 42)
+    (rand_labels, _) = fromJust $ randMatrix2d "rand_labels" (3, 1) (-1, 1) (mkStdGen 44)
+    initial_forward = fromJust $ forwardMlp model rand_input
+    old_ses = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
+    old_sum_ses = sumNombre (allParamsFromMatrix old_ses)
+
+    lr = 0.01
+    new_model = fromJust $ fitBatch model (rand_input, rand_labels) lr
+    new_forward = fromJust $ forwardMlp new_model rand_input
+    new_ses = fromJust $ meanSquaredError (output_tensor new_forward) rand_labels
+    new_sum_ses = sumNombre (allParamsFromMatrix new_ses)
+
+    passed = value old_sum_ses > value new_sum_ses
 
 main :: IO ()
 main = do
@@ -236,9 +269,15 @@ main = do
   if testMlp
     then putStrLn "PASSED test testMlp"
     else putStrLn "FAILED test testMlp"
+  if testSingleMlp
+    then putStrLn "PASSED test testSingleMlp"
+    else putStrLn "FAILED test testSingleMlp"
   if testMSE
     then putStrLn "PASSED test testMSE"
     else putStrLn "FAILED test testMSE"
+  if testFitBatch
+    then putStrLn "PASSED test testFitBatch"
+    else putStrLn "FAILED test testFitBatch"
   where
     testSimpleBackwardPassed = testSimpleBackward
     testMoreComplexBackwardPassed = testMoreComplexBackward

@@ -1,4 +1,4 @@
-module Mlp (Mlp, newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch) where
+module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch) where
 
 import qualified Data.HashMap.Strict as HM
 import Graphs
@@ -38,10 +38,6 @@ data MlpOutput = MlpOutput
   }
   deriving (Eq, Show)
 
-removeFirstLayer :: Mlp -> Mlp
-removeFirstLayer (Mlp []) = Mlp []
-removeFirstLayer (Mlp mats) = Mlp (tail mats)
-
 forwardMlp :: Mlp -> Matrix2d -> Maybe MlpOutput
 forwardMlp (Mlp []) _ = Just (MlpOutput [] emptyMatrix2d)
 forwardMlp (Mlp [mat]) inp =
@@ -51,17 +47,17 @@ forwardMlp (Mlp [mat]) inp =
   where
     first_mult :: Maybe Matrix2d
     first_mult = multMatrices inp mat
-forwardMlp model inp =
+forwardMlp (Mlp (layer1 : others)) inp =
   case first_mult of
     Nothing -> Nothing
     Just t ->
       let first_layer_hidden = applyTanh t
-       in case forwardMlp (removeFirstLayer model) first_layer_hidden of
+       in case forwardMlp (Mlp others) first_layer_hidden of
             Nothing -> Nothing
-            Just rest -> Just $ MlpOutput (first_layer_hidden : hidden_states rest) (output_tensor rest)
+            Just rest -> Just $ MlpOutput (t : first_layer_hidden : hidden_states rest) (output_tensor rest)
   where
     first_mult :: Maybe Matrix2d
-    first_mult = multMatrices inp (head (layers model))
+    first_mult = multMatrices inp layer1
 
 nameLayersBasedOnOrder :: Mlp -> Mlp
 nameLayersBasedOnOrder model = Mlp [suffixParamsMatrix2d (show i) layer | (i, layer) <- zip [0 .. length (layers model) - 1] (layers model)]
@@ -86,20 +82,20 @@ updateModelWithGraph model graph = new_model
 allParamsFromModel :: Mlp -> [Nombre]
 allParamsFromModel model = concat [allParamsFromMatrix layer | layer <- layers model]
 
-fitBatch :: Mlp -> (Matrix2d, Matrix2d) -> Double -> Mlp
+fitBatch :: Mlp -> (Matrix2d, Matrix2d) -> Double -> Maybe Mlp
 fitBatch model (inp, labels) lr =
   case out of
-    Nothing -> model
+    Nothing -> Nothing
     Just (MlpOutput hidds ot) ->
       let ses = meanSquaredError ot labels
        in case ses of
-            Nothing -> model
+            Nothing -> Nothing
             Just mat ->
               let sum_ses = sumNombre (allParamsFromMatrix mat)
-                  graph = Graph (HM.fromList [(nombre_id node, node) | node <- concat [[sum_ses], allParamsFromMatrix mat, allParamsFromMatrix ot, concat [allParamsFromMatrix hid | hid <- hidds], allParamsFromModel model]])
+                  graph = Graph (HM.fromList [(nombre_id node, node) | node <- concat [[sum_ses], allParamsFromMatrix mat, allParamsFromMatrix ot, concat [allParamsFromMatrix hid | hid <- hidds], allParamsFromModel model, allParamsFromMatrix inp, allParamsFromMatrix labels]])
                   backwarded_graph = backward (nombre_id sum_ses) graph
                   grad_steped_graph = makeGradStep backwarded_graph lr
                   new_model = updateModelWithGraph model grad_steped_graph
-               in new_model
+               in Just new_model
   where
     out = forwardMlp model inp

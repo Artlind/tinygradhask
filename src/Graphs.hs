@@ -14,7 +14,7 @@ getNombreFromId :: NodeId -> Graph -> Nombre
 getNombreFromId n_id graph =
   case HM.lookup n_id (nodes graph) of
     Just t -> t
-    Nothing -> error $ "No nombre for name: " ++ n_id
+    Nothing -> error $ "No nombre for name: " ++ n_id --TODO make that return Nothing so we can use it to fail safely and freeze some layers in MLP
 
 overwriteNode :: Graph -> Nombre -> Graph
 overwriteNode graph n = Graph (HM.fromList new_nodes)

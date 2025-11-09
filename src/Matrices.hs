@@ -73,7 +73,7 @@ addMatrices m1 m2
 multMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d
 multMatrices m1 m2
   | cols1 /= rows2 = Nothing
-  | otherwise = newMatrix2d [[dotProduct (coeffs m1 !! i) (coeffs m2 !! j) | j <- [0 .. cols2 - 1]] | i <- [0 .. rows1 - 1]]
+  | otherwise = newMatrix2d [[dotProduct (coeffs m1 !! i) [r !! j | r <- coeffs m2] | j <- [0 .. cols2 - 1]] | i <- [0 .. rows1 - 1]]
   where
     rows1 = length (coeffs m1)
     cols1 = length (head (coeffs m1))
