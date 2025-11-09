@@ -225,20 +225,30 @@ testMSE = passed
 testFitBatch :: Bool
 testFitBatch = passed
   where
+    model :: Mlp
     model = fromJust $ newRandomMlp [(3, 5, -1, 1, mkStdGen 42), (5, 1, -1, 1, mkStdGen 43)]
+    rand_input :: Matrix2d
     (rand_input, _) = fromJust $ randMatrix2d "rand_input" (3, 3) (-1, 1) (mkStdGen 42)
+    rand_labels :: Matrix2d
     (rand_labels, _) = fromJust $ randMatrix2d "rand_labels" (3, 1) (-1, 1) (mkStdGen 44)
+    initial_forward :: MlpOutput
     initial_forward = fromJust $ forwardMlp model rand_input
-    old_ses = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
-    old_sum_ses = sumNombre (allParamsFromMatrix old_ses)
+    old_suared_errors :: Matrix2d
+    old_suared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
+    old_sumed_squared_errors :: Nombre
+    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_suared_errors)
 
     lr = 0.01
+    new_model :: Mlp
     new_model = fromJust $ fitBatch model (rand_input, rand_labels) lr
+    new_forward :: MlpOutput
     new_forward = fromJust $ forwardMlp new_model rand_input
-    new_ses = fromJust $ meanSquaredError (output_tensor new_forward) rand_labels
-    new_sum_ses = sumNombre (allParamsFromMatrix new_ses)
+    new_squared_errors :: Matrix2d
+    new_squared_errors = fromJust $ meanSquaredError (output_tensor new_forward) rand_labels
+    new_sumed_squared_errors :: Nombre
+    new_sumed_squared_errors = sumNombre (allParamsFromMatrix new_squared_errors)
 
-    passed = value old_sum_ses > value new_sum_ses
+    passed = value old_sumed_squared_errors > value new_sumed_squared_errors
 
 main :: IO ()
 main = do
