@@ -1,12 +1,12 @@
 # 🧠 Haskell Nanograd
 
-A minimal **autograd engine** and **tiny neural network library** written in **pure Haskell** — inspired by [Karpathy’s Micrograd](https://github.com/karpathy/micrograd), but adapted to a functional world.
+Micrograd in haskell — inspired by [Karpathy’s Micrograd](https://github.com/karpathy/micrograd).
 
-This project lets you **build computation graphs**, **run reverse-mode autodiff**, and **train simple MLPs** — all from scratch, with no external ML frameworks.
+Allows to **build computation graphs**, **run reverse-mode autodiff**, and **train simple MLPs** — all from scratch, with no external ML frameworks.
 
 ---
 
-## ✨ Features
+## Features
 
 - **Reverse-mode autodiff** (backpropagation)
 - **Composable computation graphs**
@@ -14,13 +14,13 @@ This project lets you **build computation graphs**, **run reverse-mode autodiff*
 - **Multi-Layer Perceptron (MLP)** model
 - **Gradient-based optimization (`fitBatch`)**
 - **Deterministic randomness** using `mkStdGen`
-- **Educational design** — easy to read, hack, and extend
+- **Educational design** — I used this project to learn Haskell.
 
 ---
 
-## 🧩 Core Concepts
+## Core Concepts
 
-The library revolves around two main abstractions:
+The backend revolves around two main abstractions:
 
 - **`Nombre`** — a node in a computation graph, holding:
   - a numeric value  
@@ -31,7 +31,7 @@ The library revolves around two main abstractions:
 
 ---
 
-## 🔁 Example: Autodiff in Action
+## Example: Autodiff
 
 ```haskell
 import Tinygrad
