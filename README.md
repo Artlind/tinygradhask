@@ -1,4 +1,4 @@
-# 🧠 Haskell Nanograd
+# Haskell Nanograd
 
 Micrograd in haskell — inspired by [Karpathy’s Micrograd](https://github.com/karpathy/micrograd).
 
@@ -136,3 +136,12 @@ testFitBatch = passed
     passed = value old_sumed_squared_errors > value new_sumed_squared_errors
 
 ```
+
+## Build & Run
+
+```bash
+git clone https://github.com/Artlind/tinygradhask.git
+cd tinygradhask
+cabal build
+```
+
