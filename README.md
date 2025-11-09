@@ -67,3 +67,53 @@ testMoreComplexBackward = passed
     correct_d_grad = computed_d_grad == expected_d_grad
     correct_f_grad = computed_f_grad == expected_f_grad
     passed = correct_a_grad && correct_b_grad && correct_c_grad && correct_d_grad && correct_f_grad
+
+```
+
+This builds a computation graph for:
+
+$$
+e = \frac{(a \times b)^2}{f}
+$$
+
+and verifies that all gradients match the analytical ones.
+
+---
+
+## Example: One Training Step of an MLP
+```haskell
+import Matrices
+import Mlp
+import System.Random (StdGen, mkStdGen)
+import Data.Maybe (fromJust, isJust, isNothing)
+import Tinygrad
+
+testFitBatch :: Bool
+testFitBatch = passed
+  where
+    model :: Mlp
+    model = fromJust $ newRandomMlp [(3, 5, -1, 1, mkStdGen 42), (5, 1, -1, 1, mkStdGen 43)]
+    rand_input :: Matrix2d
+    (rand_input, _) = fromJust $ randMatrix2d "rand_input" (3, 3) (-1, 1) (mkStdGen 42)
+    rand_labels :: Matrix2d
+    (rand_labels, _) = fromJust $ randMatrix2d "rand_labels" (3, 1) (-1, 1) (mkStdGen 44)
+    initial_forward :: MlpOutput
+    initial_forward = fromJust $ forwardMlp model rand_input
+    old_suared_errors :: Matrix2d
+    old_suared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
+    old_sumed_squared_errors :: Nombre
+    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_suared_errors)
+
+    lr = 0.01
+    new_model :: Mlp
+    new_model = fromJust $ fitBatch model (rand_input, rand_labels) lr
+    new_forward :: MlpOutput
+    new_forward = fromJust $ forwardMlp new_model rand_input
+    new_squared_errors :: Matrix2d
+    new_squared_errors = fromJust $ meanSquaredError (output_tensor new_forward) rand_labels
+    new_sumed_squared_errors :: Nombre
+    new_sumed_squared_errors = sumNombre (allParamsFromMatrix new_squared_errors)
+
+    passed = value old_sumed_squared_errors > value new_sumed_squared_errors
+
+```
