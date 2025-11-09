@@ -137,11 +137,16 @@ testFitBatch = passed
 
 ```
 
-## Build & Run
+## Build & test
 
 ```bash
 git clone https://github.com/Artlind/tinygradhask.git
 cd tinygradhask
 cabal build
+cabal test
 ```
+
+## License
+
+MIT License — feel free to use, learn from, and modify this project.
 
