@@ -9,7 +9,6 @@ Allows to **build computation graphs**, **run reverse-mode autodiff**, and **tra
 ## Features
 
 - **Reverse-mode autodiff** (backpropagation)
-- **Composable computation graphs**
 - **Basic tensor-like operations** (scalars and simple 2D matrices)
 - **Multi-Layer Perceptron (MLP)** model
 - **Gradient-based optimization (`fitBatch`)**
