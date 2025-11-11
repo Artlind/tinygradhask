@@ -90,7 +90,6 @@ checkMatShapeAndRange (Just (mat, _)) shape range = checkMatShapeAndRangeNoKey (
 testrandMatrix2d :: Bool
 testrandMatrix2d = passed
   where
-    randmat_nothing, randmat :: Maybe (Matrix2d, StdGen)
     wrong_shape, good_shape :: Shape
     wrong_shape = (3, -2)
     good_shape = (3, 2)
@@ -98,6 +97,7 @@ testrandMatrix2d = passed
     range = (-1, 1)
     key :: StdGen
     key = mkStdGen 42
+    randmat_nothing, randmat :: Maybe (Matrix2d, StdGen)
     randmat_nothing = randMatrix2d "A" wrong_shape range key
     randmat = randMatrix2d "A" good_shape range key
 
@@ -239,14 +239,10 @@ testDotProductBackward = passed
 testtanH :: Bool
 testtanH = passed
   where
-    shape :: Shape
-    shape = (3, 3)
-    range :: Range
-    range = (-1, 1)
     key :: StdGen
     key = mkStdGen 42
     m3, tanned_m3 :: Matrix2d
-    (m3, _) = fromJust $ randMatrix2d "m3" shape range key
+    (m3, _) = fromJust $ randMatrix2d "m3" ((3, 3) :: Shape) ((-1, 1) :: Range) key
     tanned_m3 = fromJust $ newMatrix2d [[tanH n | n <- row] | row <- coeffs m3]
 
     summed :: Nombre
@@ -262,33 +258,24 @@ testtanH = passed
 testSingleMlp :: Bool
 testSingleMlp = passed
   where
-    shape :: Shape
-    shape = (3, 5)
-    range :: Range
-    range = (-1, 1)
     key :: StdGen
     key = mkStdGen 42
-    mat :: Matrix2d
-    (mat, _) = fromJust $ randMatrix2d "layer" shape range key
-    model :: Mlp
-    model = Mlp [mat]
+    (mat, _) = fromJust $ randMatrix2d "layer" ((3, 5) :: Shape) ((-1, 1) :: Range) key
+    model = Mlp [mat :: Matrix2d]
 
-    shape_rand_inputs :: Shape
-    shape_rand_inputs = (2, 3)
     key_rand_inputs :: StdGen
     key_rand_inputs = mkStdGen 44
-    rand_inputs :: Matrix2d
-    (rand_inputs, _) = fromJust $ randMatrix2d "inp" shape_rand_inputs range key_rand_inputs
+    (rand_inputs, _) = fromJust $ randMatrix2d "inp" ((2, 3) :: Shape) ((-1, 1) :: Range) key_rand_inputs
 
     mlp_output :: MlpOutput
-    mlp_output = fromJust $ forwardMlp model rand_inputs
+    mlp_output = fromJust $ forwardMlp (model :: Mlp) (rand_inputs :: Matrix2d)
     hs :: [Matrix2d]
     hs = hidden_states mlp_output
     ot :: Matrix2d
     ot = output_tensor mlp_output
 
     res_matmul :: Matrix2d
-    res_matmul = fromJust $ multMatrices rand_inputs mat
+    res_matmul = fromJust $ multMatrices (rand_inputs :: Matrix2d) (mat :: Matrix2d)
 
     correct_n_hidden = null hs
     correct_ot_vals = all and [[value n1 == value n2 | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs res_matmul) (coeffs ot)]
@@ -304,17 +291,13 @@ testMlp = passed
     model :: Mlp
     model = fromJust $ newRandomMlp [(shape, range, key) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
 
-    shape_rand_inputs :: Shape
-    shape_rand_inputs = (2, 3)
-    range_rand_inputs :: Range
-    range_rand_inputs = (-1, 1)
     key_rand_inputs :: StdGen
     key_rand_inputs = mkStdGen 44
     rand_inputs :: Matrix2d
-    (rand_inputs, _) = fromJust $ randMatrix2d "inp" shape_rand_inputs range_rand_inputs key_rand_inputs
+    (rand_inputs, _) = fromJust $ randMatrix2d "inp" ((2, 3) :: Shape) ((-1, 1) :: Range) key_rand_inputs
 
     mlp_output :: MlpOutput
-    mlp_output = fromJust $ forwardMlp model rand_inputs
+    mlp_output = fromJust $ forwardMlp (model :: Mlp) (rand_inputs :: Matrix2d)
     hs :: [Matrix2d]
     hs = hidden_states mlp_output
     ot :: Matrix2d
@@ -329,14 +312,12 @@ testMSE = passed
   where
     shape :: Shape
     shape = (3, 2)
-    range :: Range
-    range = (-1, 1)
     key1, key2 :: StdGen
     key1 = mkStdGen 42
     key2 = mkStdGen 43
     m1, m2, ses :: Matrix2d
-    (m1, _) = fromJust $ randMatrix2d "m1" shape range key1
-    (m2, _) = fromJust $ randMatrix2d "m2" shape range key2
+    (m1, _) = fromJust $ randMatrix2d "m1" shape ((-1, 1) :: Range) key1
+    (m2, _) = fromJust $ randMatrix2d "m2" shape ((-1, 1) :: Range) key2
     ses = fromJust $ meanSquaredError m1 m2
 
     correct_ses_dim = (length (coeffs ses), length (head (coeffs ses))) == shape
@@ -377,10 +358,10 @@ testFitBatch = passed
     (rand_labels, _) = fromJust $ randMatrix2d "rand_labels" shape_output range_input_and_labels key_output
     initial_forward :: MlpOutput
     initial_forward = fromJust $ forwardMlp model rand_input
-    old_suared_errors :: Matrix2d
-    old_suared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
+    old_squared_errors :: Matrix2d
+    old_squared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
     old_sumed_squared_errors :: Nombre
-    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_suared_errors)
+    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_squared_errors)
 
     lr = 0.01
     new_model :: Mlp
