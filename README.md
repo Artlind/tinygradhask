@@ -1,6 +1,6 @@
-# Haskell Nanograd
+# Haskell Tinygrad
 
-Micrograd in haskell — inspired by [Karpathy’s Micrograd](https://github.com/karpathy/micrograd).
+Tinygrad in haskell — inspired by [Karpathy’s Micrograd](https://github.com/karpathy/micrograd).
 
 Allows to **build computation graphs**, **run reverse-mode autodiff**, and **train simple MLPs** — all from scratch, with no external ML frameworks.
 
@@ -8,7 +8,7 @@ Allows to **build computation graphs**, **run reverse-mode autodiff**, and **tra
 
 ## Features
 
-- **Reverse-mode autodiff** (backpropagation)
+- **Backprop**
 - **Basic tensor-like operations** (scalars and simple 2D matrices)
 - **Multi-Layer Perceptron (MLP)** model
 - **Gradient-based optimization (`fitBatch`)**
@@ -79,7 +79,7 @@ $$
 e = \frac{(a \times b)^2}{f}
 $$
 
-and verifies that all gradients match the analytical ones.
+and verifies that all gradients obtained from ```backward e``` match the analytical ones.
 
 ---
 
