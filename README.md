@@ -118,10 +118,10 @@ testFitBatch = passed
     (rand_labels, _) = fromJust $ randMatrix2d "rand_labels" shape_output range_input_and_labels key_output
     initial_forward :: MlpOutput
     initial_forward = fromJust $ forwardMlp model rand_input
-    old_suared_errors :: Matrix2d
-    old_suared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
+    old_squared_errors :: Matrix2d
+    old_squared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
     old_sumed_squared_errors :: Nombre
-    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_suared_errors)
+    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_squared_errors)
 
     lr = 0.01
     new_model :: Mlp
