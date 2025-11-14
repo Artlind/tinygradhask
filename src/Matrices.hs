@@ -77,12 +77,22 @@ addMatrices m1 m2
 multMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d
 multMatrices m1 m2
   | cols1 /= rows2 = Nothing
-  | otherwise = newMatrix2d [[dotProduct (coeffs m1 !! i) [r !! j | r <- coeffs m2] | j <- [0 .. cols2 - 1]] | i <- [0 .. rows1 - 1]]
+  | otherwise = do
+      coefficients <- mapM makeRow [0 .. rows1 - 1]
+      newMatrix2d coefficients
   where
     rows1 = length (coeffs m1)
     cols1 = length (head (coeffs m1))
     rows2 = length (coeffs m2)
     cols2 = length (head (coeffs m2))
+    makeRow i =
+      mapM
+        ( \j ->
+            dotProduct
+              (coeffs m1 !! i)
+              [row !! j | row <- coeffs m2]
+        )
+        [0 .. cols2 - 1]
 
 applyTanh :: Matrix2d -> Matrix2d
 applyTanh m = Matrix2d [[tanH n | n <- row] | row <- coeffs m]
@@ -105,7 +115,7 @@ updateRowWithGraph (n1 : rest) graph =
     Nothing -> n1 : updateRowWithGraph rest graph
     Just n -> n : updateRowWithGraph rest graph
   where
-    new_n1 = getNombreFromId (Nid (nombre_id n1)) graph
+    new_n1 = getNombreFromId (nombre_id n1) graph
 
 updateMatrixWithGraph :: Matrix2d -> Graph -> Matrix2d
 updateMatrixWithGraph (Matrix2d []) _ = Matrix2d []

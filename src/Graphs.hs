@@ -1,4 +1,4 @@
-module Graphs (Graph (..), getNombreFromId, overwriteNode, addNodeToGraph, removeNodeFromGraph, mergeGraphs, makeGradStep) where
+module Graphs (Graph (..), getNombreFromId, overwriteNode, addNodeToGraph, removeNodeFromGraph, mergeGraphs, makeGradStep, updateGraph) where
 
 import Common
 import qualified Data.HashMap.Strict as HM
@@ -11,17 +11,15 @@ newtype Graph = Graph
   }
   deriving (Eq, Show)
 
-getNombreFromId :: Parent -> Graph -> Maybe Nombre
-getNombreFromId parent graph =
-  case parent of
-    RawNombre nombre -> Just nombre
-    Nid n_id -> HM.lookup n_id (nodes graph)
+getNombreFromId :: NodeId -> Graph -> Maybe Nombre
+getNombreFromId n_id graph = HM.lookup n_id (nodes graph)
 
+-- Creates a node if not present
 overwriteNode :: Graph -> Nombre -> Graph
 overwriteNode graph n = Graph (HM.fromList new_nodes)
   where
     id_to_change = nombre_id n
-    new_nodes = [if current_id == id_to_change then (id_to_change, n) else (current_id, node) | (current_id, node) <- HM.toList (nodes graph)]
+    new_nodes = [if current_id == id_to_change then (id_to_change, n) else (current_id, node) | (current_id, node) <- HM.toList (nodes graph) ++ [(id_to_change, n)]]
 
 addNodeToGraph :: Nombre -> Graph -> Graph
 addNodeToGraph n graph = Graph (HM.fromList new_nodes)
@@ -50,8 +48,17 @@ mergeGraphs graphs = merged_graphs
     all_unique_ids :: Set.Set NodeId
     all_unique_ids = Set.fromList (concat [HM.keys (nodes graph) | graph <- graphs])
     all_grad_summed_nombres :: [(NodeId, Maybe Nombre)]
-    all_grad_summed_nombres = [(nid, addGradients [getNombreFromId (Nid nid) graph | graph <- graphs]) | nid <- Set.toList all_unique_ids]
+    all_grad_summed_nombres = [(nid, addGradients [getNombreFromId nid graph | graph <- graphs]) | nid <- Set.toList all_unique_ids]
     merged_graphs = Graph (HM.fromList [(nid, n) | (nid, Just n) <- all_grad_summed_nombres])
+
+updateGraph :: Graph -> Graph -> Graph
+updateGraph old new = updated_graph
+  where
+    ids_old :: Set.Set NodeId
+    ids_old = Set.fromList (HM.keys (nodes old))
+    all_grad_summed_old_nombres :: [(NodeId, Maybe Nombre)]
+    all_grad_summed_old_nombres = [(nid, addGradients [getNombreFromId nid graph | graph <- [old, new]]) | nid <- Set.toList ids_old]
+    updated_graph = Graph (HM.fromList [(nid, n) | (nid, Just n) <- all_grad_summed_old_nombres])
 
 makeGradStep :: Graph -> Double -> Graph
 makeGradStep graph learning_rate = new_graph
