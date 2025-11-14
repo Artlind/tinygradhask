@@ -2,6 +2,7 @@ module Tinygrad (Operation, Nombre (..), Graph (..), backward, getNombreFromId, 
 
 import Common
 import qualified Data.HashMap.Strict as HM
+import Data.Maybe
 import Graphs
 import Nombres
 
@@ -50,18 +51,25 @@ backwardParents n graph = new_node_parents
               Nombre (value parent_num) (grad parent_num + grad_child / value parent_den) (nombre_id parent_num) (parents parent_num) (operation parent_num)
             ]
       where
+        parentsn :: [Parent]
         parentsn = parents n
-        nodeparents = [getNombreFromId nid graph | nid <- parentsn]
+        nodeparents_all = [getNombreFromId parent graph | parent <- parentsn] -- Missing a functionality : A+B+C => (A+B)+C and maybe A+B not in graph...
+        nodeparents = catMaybes nodeparents_all
         grad_child = grad n
 
 backwardInner :: NodeId -> Graph -> Graph
-backwardInner child_id graph
-  | null (parents child) = graph
-  | otherwise = addNodeToGraph child (removeNodeFromGraph child (mergeGraphs graph_parents))
+backwardInner child_id graph =
+  case child of
+    Nothing -> graph
+    Just n ->
+      case parents n of
+        [] -> graph
+        _ ->
+          let backwarded_parents = backwardParents n graph
+              graph_parents = [backwardInner (nombre_id nod) (overwriteNode graph nod) | nod <- backwarded_parents]
+           in addNodeToGraph n (removeNodeFromGraph n (mergeGraphs graph_parents))
   where
-    child = getNombreFromId child_id graph
-    backwarded_parents = backwardParents child graph
-    graph_parents = [backwardInner (nombre_id nod) (overwriteNode graph nod) | nod <- backwarded_parents]
+    child = getNombreFromId (Nid child_id) graph
 
 zeroGrad :: Graph -> Graph
 zeroGrad graph = new_graph
@@ -70,9 +78,11 @@ zeroGrad graph = new_graph
     new_graph = Graph $ HM.fromList [(nid, Nombre (value node) 0.0 nid (parents node) (operation node)) | (nid, node) <- HM.toList (nodes graph)]
 
 backward :: NodeId -> Graph -> Graph
-backward child_id graph
-  | null (parents child) = overwriteNode graph new_child
-  | otherwise = mergeGraphs [graph, backwardInner child_id (overwriteNode (zeroGrad graph) new_child)]
+backward child_id graph =
+  case child of
+    Nothing -> graph
+    Just n -> mergeGraphs [graph, backwardInner child_id (overwriteNode (zeroGrad graph) new_child)]
+      where
+        new_child = Nombre (value n) 1.0 child_id (parents n) (operation n)
   where
-    child = getNombreFromId child_id graph
-    new_child = Nombre (value child) 1.0 child_id (parents child) (operation child)
+    child = getNombreFromId (Nid child_id) graph

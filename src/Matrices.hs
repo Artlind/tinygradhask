@@ -98,9 +98,18 @@ meanSquaredError m1 m2
     shape1 = (length (coeffs m1), length (head (coeffs m1)))
     shape2 = (length (coeffs m2), length (head (coeffs m2)))
 
+updateRowWithGraph :: [Nombre] -> Graph -> [Nombre]
+updateRowWithGraph [] _ = []
+updateRowWithGraph (n1 : rest) graph =
+  case new_n1 of
+    Nothing -> n1 : updateRowWithGraph rest graph
+    Just n -> n : updateRowWithGraph rest graph
+  where
+    new_n1 = getNombreFromId (Nid (nombre_id n1)) graph
+
 updateMatrixWithGraph :: Matrix2d -> Graph -> Matrix2d
 updateMatrixWithGraph (Matrix2d []) _ = Matrix2d []
 updateMatrixWithGraph (Matrix2d [[]]) _ = Matrix2d [[]]
-updateMatrixWithGraph (Matrix2d rows) graph = new_matrix2d
+updateMatrixWithGraph (Matrix2d (row1 : rest)) graph = new_matrix2d
   where
-    new_matrix2d = Matrix2d ([getNombreFromId (nombre_id n) graph | n <- head rows] : coeffs (updateMatrixWithGraph (Matrix2d (tail rows)) graph))
+    new_matrix2d = Matrix2d (updateRowWithGraph row1 graph : coeffs (updateMatrixWithGraph (Matrix2d rest) graph))
