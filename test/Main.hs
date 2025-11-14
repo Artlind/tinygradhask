@@ -21,13 +21,33 @@ testSimpleBackward = passed
     backwarded_graph = backward "c" graph
 
     computed_a_grad, computed_b_grad, expected_a_grad, expected_b_grad :: Double
-    computed_a_grad = grad $ getNombreFromId "a" backwarded_graph
-    computed_b_grad = grad $ getNombreFromId "b" backwarded_graph
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    computed_b_grad = grad (fromJust (getNombreFromId "b" backwarded_graph))
     expected_a_grad = value b
     expected_b_grad = value a
 
     correct_a_grad = computed_a_grad == expected_a_grad
     correct_b_grad = computed_b_grad == expected_b_grad
+    passed = correct_a_grad && correct_b_grad
+
+testSimpleBackwardnoB :: Bool
+testSimpleBackwardnoB = passed
+  where
+    a, b, c :: Nombre
+    a = createNombre ("a", 2)
+    b = createNombre ("b", 3)
+    c = newNombreWithId ("c", a * b)
+
+    graph, backwarded_graph :: Graph
+    graph = Graph (HM.fromList [(nombre_id node, node) | node <- [a, c]])
+    backwarded_graph = backward "c" graph
+
+    computed_a_grad, expected_a_grad :: Double
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    expected_a_grad = value b
+
+    correct_a_grad = computed_a_grad == expected_a_grad
+    correct_b_grad = isNothing $ getNombreFromId "b" backwarded_graph
     passed = correct_a_grad && correct_b_grad
 
 testMoreComplexBackward :: Bool
@@ -46,11 +66,11 @@ testMoreComplexBackward = passed
     backwarded_graph = backward "e" graph
 
     computed_a_grad, computed_b_grad, computed_c_grad, computed_d_grad, computed_f_grad :: Double
-    computed_a_grad = grad $ getNombreFromId "a" backwarded_graph
-    computed_b_grad = grad $ getNombreFromId "b" backwarded_graph
-    computed_c_grad = grad $ getNombreFromId "c" backwarded_graph
-    computed_d_grad = grad $ getNombreFromId "d" backwarded_graph
-    computed_f_grad = grad $ getNombreFromId "f" backwarded_graph
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    computed_b_grad = grad (fromJust (getNombreFromId "b" backwarded_graph))
+    computed_c_grad = grad (fromJust (getNombreFromId "c" backwarded_graph))
+    computed_d_grad = grad (fromJust (getNombreFromId "d" backwarded_graph))
+    computed_f_grad = grad (fromJust (getNombreFromId "f" backwarded_graph))
 
     expected_a_grad, expected_b_grad, expected_c_grad, expected_d_grad, expected_f_grad :: Double
     expected_d_grad = 1 / value f
@@ -149,9 +169,9 @@ testSumBackward = passed
     backwarded_graph = backward "d" graph
 
     computed_a_grad, computed_b_grad, computed_c_grad :: Double
-    computed_a_grad = grad $ getNombreFromId "a" backwarded_graph
-    computed_b_grad = grad $ getNombreFromId "b" backwarded_graph
-    computed_c_grad = grad $ getNombreFromId "c" backwarded_graph
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    computed_b_grad = grad (fromJust (getNombreFromId "b" backwarded_graph))
+    computed_c_grad = grad (fromJust (getNombreFromId "c" backwarded_graph))
 
     expected_a_grad, expected_b_grad, expected_c_grad :: Double
     expected_a_grad = 1
@@ -166,9 +186,9 @@ testSumBackward = passed
     backwarded_e_graph = backward "e" graph
 
     computed_a_grad_e, computed_b_grad_e, computed_c_grad_e :: Double
-    computed_a_grad_e = grad $ getNombreFromId "a" backwarded_e_graph
-    computed_b_grad_e = grad $ getNombreFromId "b" backwarded_e_graph
-    computed_c_grad_e = grad $ getNombreFromId "c" backwarded_e_graph
+    computed_a_grad_e = grad (fromJust (getNombreFromId "a" backwarded_e_graph))
+    computed_b_grad_e = grad (fromJust (getNombreFromId "b" backwarded_e_graph))
+    computed_c_grad_e = grad (fromJust (getNombreFromId "c" backwarded_e_graph))
 
     expected_a_grad_e, expected_b_grad_e, expected_c_grad_e :: Double
     expected_a_grad_e = 2 * value d -- d(a**2 + 2*ab + 2* ac + 2*bc)/da = 2a+2b+2c
@@ -188,7 +208,7 @@ testDotProductBackward = passed
     b = createNombre ("b", 3)
     c = createNombre ("c", 4)
     d = createNombre ("d", 5)
-    e = newNombreWithId ("e", dotProduct [a, b] [c, d])
+    e = newNombreWithId ("e", fromJust (dotProduct [a, b] [c, d]))
     f = newNombreWithId ("f", e * e)
 
     graph, backwarded_graph :: Graph
@@ -196,10 +216,10 @@ testDotProductBackward = passed
     backwarded_graph = backward "e" graph
 
     computed_a_grad, computed_b_grad, computed_c_grad, computed_d_grad :: Double
-    computed_a_grad = grad $ getNombreFromId "a" backwarded_graph
-    computed_b_grad = grad $ getNombreFromId "b" backwarded_graph
-    computed_c_grad = grad $ getNombreFromId "c" backwarded_graph
-    computed_d_grad = grad $ getNombreFromId "d" backwarded_graph
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    computed_b_grad = grad (fromJust (getNombreFromId "b" backwarded_graph))
+    computed_c_grad = grad (fromJust (getNombreFromId "c" backwarded_graph))
+    computed_d_grad = grad (fromJust (getNombreFromId "d" backwarded_graph))
 
     expected_a_grad, expected_b_grad, expected_c_grad, expected_d_grad :: Double
     expected_a_grad = value c
@@ -216,11 +236,11 @@ testDotProductBackward = passed
     backwarded_graph_f = backward "f" graph
 
     computed_a_grad_f, computed_b_grad_f, computed_c_grad_f, computed_d_grad_f, computed_e_grad_f :: Double
-    computed_a_grad_f = grad $ getNombreFromId "a" backwarded_graph_f
-    computed_b_grad_f = grad $ getNombreFromId "b" backwarded_graph_f
-    computed_c_grad_f = grad $ getNombreFromId "c" backwarded_graph_f
-    computed_d_grad_f = grad $ getNombreFromId "d" backwarded_graph_f
-    computed_e_grad_f = grad $ getNombreFromId "e" backwarded_graph_f
+    computed_a_grad_f = grad (fromJust (getNombreFromId "a" backwarded_graph_f))
+    computed_b_grad_f = grad (fromJust (getNombreFromId "b" backwarded_graph_f))
+    computed_c_grad_f = grad (fromJust (getNombreFromId "c" backwarded_graph_f))
+    computed_d_grad_f = grad (fromJust (getNombreFromId "d" backwarded_graph_f))
+    computed_e_grad_f = grad (fromJust (getNombreFromId "e" backwarded_graph_f))
 
     expected_a_grad_f, expected_b_grad_f, expected_c_grad_f, expected_d_grad_f, expected_e_grad_f :: Double
     expected_e_grad_f = 2 * value e
@@ -253,7 +273,7 @@ testtanH = passed
     graph = Graph (HM.fromList [(nombre_id node, node) | node <- all_nombres])
     backwarded_graphsum = backward (nombre_id summed) graph
 
-    passed = all and ([[grad (getNombreFromId (nombre_id n) backwarded_graphsum) == (1 - tanh (value n) ** 2) | n <- row] | row <- coeffs m3])
+    passed = all and ([[grad (fromJust (getNombreFromId (nombre_id n) backwarded_graphsum)) == (1 - tanh (value n) ** 2) | n <- row] | row <- coeffs m3])
 
 testSingleMlp :: Bool
 testSingleMlp = passed
@@ -329,7 +349,7 @@ testMSE = passed
     graph = Graph (HM.fromList [(nombre_id node, node) | node <- concat [allParamsFromMatrix m1, allParamsFromMatrix m2, allParamsFromMatrix ses, [sum_ses]]])
     backwarded_graph = backward (nombre_id sum_ses) graph
 
-    correct_grads = all and ([[grad (getNombreFromId (nombre_id n1) backwarded_graph) == 2 * (value n1 - value n2) | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs m1) (coeffs m2)])
+    correct_grads = all and ([[grad (fromJust (getNombreFromId (nombre_id n1) backwarded_graph)) == 2 * (value n1 - value n2) | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs m1) (coeffs m2)])
     passed = correct_ses_dim && correct_values && correct_grads
 
 testFitBatch :: Bool
@@ -375,6 +395,32 @@ testFitBatch = passed
 
     passed = value old_sumed_squared_errors > value new_sumed_squared_errors
 
+testBackwardMultiOp :: Bool
+testBackwardMultiOp = passed
+  where
+    a, b, c :: Nombre
+    a = createNombre ("a", 2)
+    b = createNombre ("b", 3)
+    c = createNombre ("c", 4)
+    d = newNombreWithId ("d", a * b + c)
+
+    graph, backwarded_graph :: Graph
+    graph = Graph (HM.fromList [(nombre_id node, node) | node <- [a, b, c, d]])
+    backwarded_graph = backward "d" graph
+
+    computed_a_grad, computed_b_grad, expected_a_grad, expected_b_grad :: Double
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    computed_b_grad = grad (fromJust (getNombreFromId "b" backwarded_graph))
+    computed_c_grad = grad (fromJust (getNombreFromId "c" backwarded_graph))
+    expected_a_grad = value b
+    expected_b_grad = value a
+    expected_c_grad = 1.0
+
+    correct_a_grad = computed_a_grad == expected_a_grad
+    correct_b_grad = computed_b_grad == expected_b_grad
+    correct_c_grad = computed_c_grad == expected_c_grad
+    passed = correct_a_grad && correct_b_grad && correct_c_grad
+
 main :: IO ()
 main = do
   if testSimpleBackwardPassed
@@ -413,6 +459,12 @@ main = do
   if testFitBatch
     then putStrLn "PASSED test testFitBatch"
     else putStrLn "FAILED test testFitBatch"
+  if testSimpleBackwardnoB
+    then putStrLn "PASSED test testSimpleBackwardnoB "
+    else putStrLn "FAILED test testSimpleBackwardnoB "
+  if testBackwardMultiOp
+    then putStrLn "PASSED test testBackwardMultiOp "
+    else putStrLn "FAILED test testBackwardMultiOp "
   where
     testSimpleBackwardPassed = testSimpleBackward
     testMoreComplexBackwardPassed = testMoreComplexBackward
