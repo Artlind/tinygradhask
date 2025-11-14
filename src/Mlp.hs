@@ -86,13 +86,13 @@ fitBatch :: Mlp -> (Matrix2d, Matrix2d) -> Double -> Maybe Mlp
 fitBatch model (inp, labels) lr =
   case out of
     Nothing -> Nothing
-    Just (MlpOutput hidds ot) ->
+    Just (MlpOutput _ ot) ->
       let ses = meanSquaredError ot labels
        in case ses of
             Nothing -> Nothing
             Just mat ->
               let sum_ses = sumNombre (allParamsFromMatrix mat)
-                  graph = Graph (HM.fromList [(nombre_id node, node) | node <- concat [[sum_ses], allParamsFromMatrix mat, allParamsFromMatrix ot, concat [allParamsFromMatrix hid | hid <- hidds], allParamsFromModel model, allParamsFromMatrix inp, allParamsFromMatrix labels]])
+                  graph = Graph (HM.fromList [(nombre_id node, node) | node <- sum_ses : allParamsFromModel model])
                   backwarded_graph = backward (nombre_id sum_ses) graph
                   grad_steped_graph = makeGradStep backwarded_graph lr
                   new_model = updateModelWithGraph model grad_steped_graph
