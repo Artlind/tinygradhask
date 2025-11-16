@@ -280,8 +280,9 @@ testSingleMlp = passed
   where
     key :: StdGen
     key = mkStdGen 42
-    (mat, _) = fromJust $ randMatrix2d "layer" ((3, 5) :: Shape) ((-1, 1) :: Range) key
-    model = Mlp [mat :: Matrix2d]
+    (w, new_key) = fromJust $ randMatrix2d "weight" ((3, 5) :: Shape) ((-1, 1) :: Range) key
+    (b, _) = fromJust $ randMatrix2d "bias" ((1, 5) :: Shape) ((-1, 1) :: Range) new_key
+    model = Mlp [(w :: Weight, b :: Bias)]
 
     key_rand_inputs :: StdGen
     key_rand_inputs = mkStdGen 44
@@ -295,10 +296,11 @@ testSingleMlp = passed
     ot = output_tensor mlp_output
 
     res_matmul :: Matrix2d
-    res_matmul = fromJust $ multMatrices (rand_inputs :: Matrix2d) (mat :: Matrix2d)
+    res_matmul = fromJust $ multMatrices (rand_inputs :: Matrix2d) (w :: Matrix2d)
+    res_computed_forward = fromJust $ addBias res_matmul b
 
     correct_n_hidden = null hs
-    correct_ot_vals = all and [[value n1 == value n2 | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs res_matmul) (coeffs ot)]
+    correct_ot_vals = all and [[value n1 == value n2 | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs res_computed_forward) (coeffs ot)]
     passed = correct_n_hidden && correct_ot_vals
 
 testMlp :: Bool
@@ -323,7 +325,7 @@ testMlp = passed
     ot :: Matrix2d
     ot = output_tensor mlp_output
 
-    correct_n_hidden = length hs == (2 * (length shapes - 1))
+    correct_n_hidden = length hs == (length shapes - 1)
     correct_ot_dim = (length (coeffs ot), length (head (coeffs ot))) == (2, 1)
     passed = correct_n_hidden && correct_ot_dim
 
@@ -425,46 +427,46 @@ main :: IO ()
 main = do
   if testSimpleBackwardPassed
     then putStrLn "PASSED test simplebackward"
-    else putStrLn "FAILED test simplebackward"
+    else putStrLn "FAILED!!!!! test simplebackward"
   if testMoreComplexBackwardPassed
     then putStrLn "PASSED test morecomplexbackward"
-    else putStrLn "FAILED test morecomplexbackward"
+    else putStrLn "FAILED!!!!! test morecomplexbackward"
   if testnewMatrix2d
     then putStrLn "PASSED test testnewMatrix2d"
-    else putStrLn "FAILED test testnewMatrix2d"
+    else putStrLn "FAILED!!!!! test testnewMatrix2d"
   if testrandMatrix2d
     then putStrLn "PASSED test testrandMatrix2d"
-    else putStrLn "FAILED test testrandMatrix2d"
+    else putStrLn "FAILED!!!!! test testrandMatrix2d"
   if testaddMatrices
     then putStrLn "PASSED test testaddMatrices"
-    else putStrLn "FAILED test testaddMatrices"
+    else putStrLn "FAILED!!!!! test testaddMatrices"
   if testSumBackward
     then putStrLn "PASSED test testSumBackward"
-    else putStrLn "FAILED test testSumBackward"
+    else putStrLn "FAILED!!!!! test testSumBackward"
   if testDotProductBackward
     then putStrLn "PASSED test testDotProductBackward"
-    else putStrLn "FAILED test testDotProductBackward"
+    else putStrLn "FAILED!!!!! test testDotProductBackward"
   if testtanH
     then putStrLn "PASSED test testtanH"
-    else putStrLn "FAILED test testtanH"
+    else putStrLn "FAILED!!!!! test testtanH"
   if testMlp
     then putStrLn "PASSED test testMlp"
-    else putStrLn "FAILED test testMlp"
+    else putStrLn "FAILED!!!!! test testMlp"
   if testSingleMlp
     then putStrLn "PASSED test testSingleMlp"
-    else putStrLn "FAILED test testSingleMlp"
+    else putStrLn "FAILED!!!!! test testSingleMlp"
   if testMSE
     then putStrLn "PASSED test testMSE"
-    else putStrLn "FAILED test testMSE"
+    else putStrLn "FAILED!!!!! test testMSE"
   if testFitBatch
     then putStrLn "PASSED test testFitBatch"
-    else putStrLn "FAILED test testFitBatch"
+    else putStrLn "FAILED!!!!! test testFitBatch"
   if testSimpleBackwardnoB
     then putStrLn "PASSED test testSimpleBackwardnoB "
-    else putStrLn "FAILED test testSimpleBackwardnoB "
+    else putStrLn "FAILED!!!!! test testSimpleBackwardnoB "
   if testBackwardMultiOp
     then putStrLn "PASSED test testBackwardMultiOp "
-    else putStrLn "FAILED test testBackwardMultiOp "
+    else putStrLn "FAILED!!!!! test testBackwardMultiOp "
   where
     testSimpleBackwardPassed = testSimpleBackward
     testMoreComplexBackwardPassed = testMoreComplexBackward
