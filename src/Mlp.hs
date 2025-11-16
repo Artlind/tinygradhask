@@ -1,4 +1,4 @@
-module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch) where
+module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch, Weight, Bias, addBias) where
 
 import qualified Data.HashMap.Strict as HM
 import Graphs
@@ -6,30 +6,47 @@ import Matrices
 import System.Random (StdGen)
 import Tinygrad
 
+type Weight = Matrix2d
+
+type Bias = Matrix2d
+
 newtype Mlp = Mlp
-  { layers :: [Matrix2d]
+  { layers :: [(Weight, Bias)]
   }
   deriving (Eq, Show)
 
-isCompatible :: [Matrix2d] -> Maybe [Matrix2d]
-isCompatible [] = Just []
-isCompatible [m] = Just [m]
-isCompatible (m1 : m2 : ms)
-  | cols1 /= rows2 = Nothing
-  | otherwise = do
-      rest <- isCompatible (m2 : ms)
-      return (m1 : rest)
-  where
-    cols1 = length (head (coeffs m1))
-    rows2 = length (coeffs m2)
+isCompatibleWeightBias :: (Weight, Bias) -> Maybe (Weight, Bias)
+isCompatibleWeightBias (l, b)
+  | length (coeffs b) /= 1 = Nothing
+  | null (head (coeffs b)) = Nothing
+  | length (head (coeffs l)) == length (head (coeffs b)) = Just (l, b)
+  | otherwise = Nothing
 
-newMlp :: [Matrix2d] -> Maybe Mlp
+isCompatible :: [(Weight, Bias)] -> Maybe [(Weight, Bias)]
+isCompatible [] = Just []
+isCompatible [(l, b)] =
+  case isCompatibleWeightBias (l, b) of
+    Nothing -> Nothing
+    Just res -> Just [res]
+isCompatible ((l1, b1) : rest) = do
+  l1b1compat <- isCompatibleWeightBias (l1, b1)
+  case rest of
+    ((l2, _) : _) ->
+      let cols1 = length (head (coeffs l1))
+          rows2 = length (coeffs l2)
+       in if cols1 /= rows2
+            then Nothing
+            else do
+              restcomp <- isCompatible rest
+              return (l1b1compat : restcomp)
+
+newMlp :: [(Weight, Bias)] -> Maybe Mlp
 newMlp ms =
   case compatible_dims of
     Just t -> Just (Mlp t)
     Nothing -> Nothing
   where
-    compatible_dims :: Maybe [Matrix2d]
+    compatible_dims :: Maybe [(Weight, Bias)]
     compatible_dims = isCompatible ms
 
 data MlpOutput = MlpOutput
@@ -38,49 +55,62 @@ data MlpOutput = MlpOutput
   }
   deriving (Eq, Show)
 
+addBias :: Matrix2d -> Bias -> Maybe Matrix2d
+addBias h b
+  | length (coeffs b) /= 1 = Nothing
+  | otherwise = do
+      let batch_size = length (coeffs h)
+      broadcasted_bias <- newMatrix2d [head (coeffs b) | _ <- [1 .. (batch_size :: Int)]]
+      addMatrices h broadcasted_bias
+
 forwardMlp :: Mlp -> Matrix2d -> Maybe MlpOutput
 forwardMlp (Mlp []) _ = Just (MlpOutput [] emptyMatrix2d)
-forwardMlp (Mlp [mat]) inp =
+forwardMlp (Mlp [(w, b)]) inp =
   case first_mult of
     Nothing -> Nothing
-    Just t -> Just (MlpOutput [] t)
+    Just t -> do
+      res <- addBias t b
+      Just (MlpOutput [] res)
   where
     first_mult :: Maybe Matrix2d
-    first_mult = multMatrices inp mat
-forwardMlp (Mlp (layer1 : others)) inp =
+    first_mult = multMatrices inp w
+forwardMlp (Mlp ((w1, b1) : others)) inp =
   case first_mult of
     Nothing -> Nothing
-    Just t ->
-      let first_layer_hidden = applyTanh t
+    Just t -> do
+      res <- addBias t b1
+      let first_layer_hidden = applyTanh res
        in case forwardMlp (Mlp others) first_layer_hidden of
             Nothing -> Nothing
-            Just rest -> Just $ MlpOutput (t : first_layer_hidden : hidden_states rest) (output_tensor rest)
+            Just rest -> Just $ MlpOutput (first_layer_hidden : hidden_states rest) (output_tensor rest)
   where
     first_mult :: Maybe Matrix2d
-    first_mult = multMatrices inp layer1
+    first_mult = multMatrices inp w1
 
 nameLayersBasedOnOrder :: Mlp -> Mlp
-nameLayersBasedOnOrder model = Mlp [suffixParamsMatrix2d (show i) layer | (i, layer) <- zip [0 .. length (layers model) - 1] (layers model)]
+nameLayersBasedOnOrder model = Mlp [(suffixParamsMatrix2d (show i) w, suffixParamsMatrix2d (show i) b) | (i, (w, b)) <- zip [0 .. length (layers model) - 1] (layers model)]
 
 newRandomMlp :: [(Shape, Range, StdGen)] -> Maybe Mlp
 newRandomMlp [] = Just (Mlp [])
 newRandomMlp [((indim, outdim), (minrange, maxrange), key)] = do
-  (mat, _) <- randMatrix2d "layer" (indim, outdim) (minrange, maxrange) key
-  newMlp [mat]
+  (w, new_key) <- randMatrix2d "weight" (indim, outdim) (minrange, maxrange) key
+  (b, _) <- randMatrix2d "bias" (1, outdim) (minrange, maxrange) new_key
+  newMlp [(w, b)]
 newRandomMlp dims_and_ranges = do
   let ((indim, outdim), (minrange, maxrange), key) = head dims_and_ranges
-  (mat, _) <- randMatrix2d "layer" (indim, outdim) (minrange, maxrange) key
+  (w, new_key) <- randMatrix2d "weight" (indim, outdim) (minrange, maxrange) key
+  (b, _) <- randMatrix2d "bias" (1, outdim) (minrange, maxrange) new_key
   rest <- newRandomMlp (tail dims_and_ranges)
-  mlp <- newMlp (mat : layers rest)
+  mlp <- newMlp ((w, b) : layers rest)
   return (nameLayersBasedOnOrder mlp)
 
 updateModelWithGraph :: Mlp -> Graph -> Mlp
 updateModelWithGraph model graph = new_model
   where
-    new_model = Mlp [updateMatrixWithGraph mat graph | mat <- layers model]
+    new_model = Mlp [(updateMatrixWithGraph w graph, updateMatrixWithGraph b graph) | (w, b) <- layers model]
 
 allParamsFromModel :: Mlp -> [Nombre]
-allParamsFromModel model = concat [allParamsFromMatrix layer | layer <- layers model]
+allParamsFromModel model = concat [allParamsFromMatrix w ++ allParamsFromMatrix b | (w, b) <- layers model]
 
 fitBatch :: Mlp -> (Matrix2d, Matrix2d) -> Double -> Maybe Mlp
 fitBatch model (inp, labels) lr =
