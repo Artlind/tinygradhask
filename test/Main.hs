@@ -282,7 +282,7 @@ testSingleMlp = passed
     key = mkStdGen 42
     (w, new_key) = fromJust $ randMatrix2d "weight" ((3, 5) :: Shape) ((-1, 1) :: Range) key
     (b, _) = fromJust $ randMatrix2d "bias" ((1, 5) :: Shape) ((-1, 1) :: Range) new_key
-    model = Mlp [(w :: Weight, b :: Bias)]
+    model = Mlp [(w :: Weight, Just b :: Bias)]
 
     key_rand_inputs :: StdGen
     key_rand_inputs = mkStdGen 44
@@ -297,7 +297,7 @@ testSingleMlp = passed
 
     res_matmul :: Matrix2d
     res_matmul = fromJust $ multMatrices (rand_inputs :: Matrix2d) (w :: Matrix2d)
-    res_computed_forward = fromJust $ addBias res_matmul b
+    res_computed_forward = fromJust $ addBias res_matmul (Just b)
 
     correct_n_hidden = null hs
     correct_ot_vals = all and [[value n1 == value n2 | (n1, n2) <- zip row1 row2] | (row1, row2) <- zip (coeffs res_computed_forward) (coeffs ot)]
@@ -311,7 +311,7 @@ testMlp = passed
     ranges :: [Range]
     ranges = [(-1, 1), (-1, 1)]
     model :: Mlp
-    model = fromJust $ newRandomMlp [(shape, range, key) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
+    model = fromJust $ newRandomMlp [(shape, range, key, True :: WithBias) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
 
     key_rand_inputs :: StdGen
     key_rand_inputs = mkStdGen 44
@@ -362,7 +362,7 @@ testFitBatch = passed
     ranges :: [Range]
     ranges = [(-1, 1), (-1, 1)]
     model :: Mlp
-    model = fromJust $ newRandomMlp [(shape, range, key) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
+    model = fromJust $ newRandomMlp [(shape, range, key, True :: WithBias) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
 
     batch_size :: Int
     batch_size = 3
