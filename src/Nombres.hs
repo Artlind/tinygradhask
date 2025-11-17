@@ -2,6 +2,7 @@ module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduc
 
 import Common
 
+-- Nombre struct
 data Nombre = Nombre
   { value :: Double,
     grad :: Double,
@@ -25,6 +26,7 @@ instance Fractional Nombre where
   recip (Nombre a ga n1 pa oa rga) = Nombre (1 / a) 0 ("1/" ++ n1) [Nombre 1 0 "constant" [] Rien False, Nombre a ga n1 pa oa rga] Div rga
   fromRational r = Nombre (fromRational r) 0 "constant" [] Rien False
 
+-- Utils for creating numbers
 newNombreWithId :: (NodeId, Nombre) -> Nombre
 newNombreWithId (new_id, n) = Nombre (value n) (grad n) new_id (parents n) (operation n) (requires_grad n)
 
@@ -34,6 +36,7 @@ createNombre (nid, x) = Nombre x 0.0 nid [] Rien True
 nombreNoGrad :: Nombre -> Nombre
 nombreNoGrad (Nombre a ga n1 pa oa _) = Nombre a ga n1 pa oa False
 
+-- More advanced operations
 sumNombre :: [Nombre] -> Nombre
 sumNombre nombres = Nombre (sum [value n | n <- nombres]) 0 (concatMap (++ "+") [nombre_id n | n <- nombres]) nombres Sum (or [requires_grad n | n <- nombres])
 
