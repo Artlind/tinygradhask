@@ -40,10 +40,8 @@ testMlp = passed
   where
     shapes :: [Shape]
     shapes = [(3, 5), (5, 1)]
-    ranges :: [Range]
-    ranges = [(-1, 1), (-1, 1)]
     model :: Mlp
-    model = fromJust $ newRandomMlp [(shape, range, key, True :: WithBias) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
+    model = fromJust $ newRandomMlp [(shape, key, True :: WithBias) | (shape, key) <- zip shapes [mkStdGen 42, mkStdGen 43]]
 
     key_rand_inputs :: StdGen
     key_rand_inputs = mkStdGen 44
@@ -66,10 +64,8 @@ testFitBatch = passed
   where
     shapes :: [Shape]
     shapes = [(3, 5), (5, 1)]
-    ranges :: [Range]
-    ranges = [(-1, 1), (-1, 1)]
     model :: Mlp
-    model = fromJust $ newRandomMlp [(shape, range, key, True :: WithBias) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
+    model = fromJust $ newRandomMlp [(shape, key, True :: WithBias) | (shape, key) <- zip shapes [mkStdGen 42, mkStdGen 43]]
 
     batch_size :: Int
     batch_size = 3
@@ -109,10 +105,8 @@ testFitBatchFrozenLayers = passed
   where
     shapes :: [Shape]
     shapes = [(3, 5), (5, 1)]
-    ranges :: [Range]
-    ranges = [(-1, 1), (-1, 1)]
     model, model_frozen :: Mlp
-    model = fromJust $ newRandomMlp [(shape, range, key, True :: WithBias) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
+    model = fromJust $ newRandomMlp [(shape, key, True :: WithBias) | (shape, key) <- zip shapes [mkStdGen 42, mkStdGen 43]]
     model_frozen = fromJust $ newMlp ([(if i /= 0 then w else fromJust (newMatrix2d [[nombreNoGrad n | n <- row] | row <- coeffs w]), b) | (i, (w, b)) <- zip [(0 :: Int) ..] (layers model)])
 
     batch_size :: Int
