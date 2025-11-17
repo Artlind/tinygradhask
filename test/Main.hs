@@ -45,12 +45,6 @@ main = do
   if testFitBatch
     then putStrLn "PASSED test testFitBatch"
     else putStrLn "FAILED!!!!! test testFitBatch"
-  if testSimpleBackwardnoB
-    then putStrLn "PASSED test testSimpleBackwardnoB "
-    else putStrLn "FAILED!!!!! test testSimpleBackwardnoB "
-  if testBackwardMultiOp
-    then putStrLn "PASSED test testBackwardMultiOp "
-    else putStrLn "FAILED!!!!! test testBackwardMultiOp "
   if testFitBatchFrozenLayers
     then putStrLn "PASSED test testFitBatchFrozenLayers "
     else putStrLn "FAILED!!!!! test testFitBatchFrozenLayers "

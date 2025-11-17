@@ -18,13 +18,14 @@ testnewMatrix2d = passed
     correct_rectangle = isJust rectangle
     passed = correct_not_rectangle && correct_rectangle
 
-checkMatShapeAndRangeNoKey :: Maybe Matrix2d -> (Int, Int) -> (Double, Double) -> Bool
+checkMatShapeAndRangeNoKey :: Maybe Matrix2d -> Shape -> Range -> Bool
 checkMatShapeAndRangeNoKey Nothing _ _ = False
 checkMatShapeAndRangeNoKey (Just mat) (rows, cols) (minval, maxval) =
   length (coeffs mat) == rows
     && all (\row -> length row == cols && all (\n -> let v = value n in v >= minval && v <= maxval) row) (coeffs mat)
 
-checkMatShapeAndRange :: Maybe (Matrix2d, StdGen) -> (Int, Int) -> (Double, Double) -> Bool
+-- Util function checking if a matrix matches a shape and a range
+checkMatShapeAndRange :: Maybe (Matrix2d, StdGen) -> Shape -> Range -> Bool
 checkMatShapeAndRange Nothing _ _ = False
 checkMatShapeAndRange (Just (mat, _)) shape range = checkMatShapeAndRangeNoKey (Just mat) shape range
 
