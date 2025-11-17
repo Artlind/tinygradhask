@@ -168,7 +168,6 @@ testFitBatchFrozenLayers = passed
         ]
 
     passed =
-      (value old_sumed_squared_errors > value new_sumed_squared_errors)
-        && (value old_sumed_squared_errors > value new_sumed_squared_errors_frozenw1)
+      (value old_sumed_squared_errors > value new_sumed_squared_errors_frozenw1)
         && (value new_sumed_squared_errors_frozenw1 > value new_sumed_squared_errors)
         && freezing_worked
