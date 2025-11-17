@@ -37,7 +37,10 @@ addGradients :: [Maybe Nombre] -> Maybe Nombre
 addGradients nombres =
   case just_nombres of
     [] -> Nothing
-    (nombre_1 : _) -> Just $ Nombre (value nombre_1) (sum [grad n | n <- just_nombres]) (nombre_id nombre_1) (parents nombre_1) (operation nombre_1)
+    (nombre_1 : _) ->
+      if requires_grad nombre_1
+        then Just $ Nombre (value nombre_1) (sum [grad n | n <- just_nombres]) (nombre_id nombre_1) (parents nombre_1) (operation nombre_1) (requires_grad nombre_1)
+        else Just nombre_1
   where
     just_nombres :: [Nombre]
     just_nombres = catMaybes nombres
@@ -64,4 +67,5 @@ makeGradStep :: Graph -> Double -> Graph
 makeGradStep graph learning_rate = new_graph
   where
     old_nodes = HM.toList (nodes graph)
-    new_graph = Graph (HM.fromList [(nid, Nombre (value n - learning_rate * grad n) (grad n) (nombre_id n) (parents n) (operation n)) | (nid, n) <- old_nodes])
+    -- We are never too prudent, if requires_grad is True, grad n should be 0 so this if else is not useful on paper.
+    new_graph = Graph (HM.fromList [(nid, if requires_grad n then Nombre (value n - learning_rate * grad n) (grad n) (nombre_id n) (parents n) (operation n) True else n) | (nid, n) <- old_nodes])
