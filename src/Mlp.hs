@@ -123,16 +123,23 @@ newLinearLayer ((indim, outdim), (minrange, maxrange), key, with_bias) = do
     else
       Just (w, Nothing)
 
-newRandomMlp :: [(Shape, Range, StdGen, WithBias)] -> Maybe Mlp
+defaultRangeForShape :: Shape -> Maybe Range
+defaultRangeForShape (in_features, _)
+  | in_features < 0 = Nothing
+  | otherwise = Just (-(sqrt (fromIntegral in_features)), sqrt (fromIntegral in_features))
+
+newRandomMlp :: [(Shape, StdGen, WithBias)] -> Maybe Mlp
 newRandomMlp [] = Just (Mlp [])
-newRandomMlp [args] = do
-  layer <- newLinearLayer args
+newRandomMlp [(shape, key, with_bias)] = do
+  range <- defaultRangeForShape shape
+  layer <- newLinearLayer (shape, range, key, with_bias)
   newMlp [layer]
-newRandomMlp dims_and_ranges = do
-  let argslayer1 = head dims_and_ranges
-  layer1 <- newLinearLayer argslayer1
-  rest <- newRandomMlp (tail dims_and_ranges)
-  mlp <- newMlp (layer1 : layers rest)
+newRandomMlp ((shape, key, with_bias) : other_layers_params) = do
+  -- let argslayer1 = head dims_and_ranges
+  range <- defaultRangeForShape shape
+  layer <- newLinearLayer (shape, range, key, with_bias)
+  rest <- newRandomMlp other_layers_params
+  mlp <- newMlp (layer : layers rest)
   return (nameLayersBasedOnOrder mlp)
 
 -- Training
