@@ -30,6 +30,28 @@ testSimpleBackward = passed
     correct_b_grad = computed_b_grad == expected_b_grad
     passed = correct_a_grad && correct_b_grad
 
+testSimpleBackwardNoGrad :: Bool
+testSimpleBackwardNoGrad = passed
+  where
+    a, b, c :: Nombre
+    a = createNombre ("a", 2)
+    b = nombreNoGrad (createNombre ("b", 3))
+    c = newNombreWithId ("c", a * b)
+
+    graph, backwarded_graph :: Graph
+    graph = Graph (HM.fromList [(nombre_id node, node) | node <- [a, b, c]])
+    backwarded_graph = backward "c" graph
+
+    computed_a_grad, computed_b_grad, expected_a_grad, expected_b_grad :: Double
+    computed_a_grad = grad (fromJust (getNombreFromId "a" backwarded_graph))
+    computed_b_grad = grad (fromJust (getNombreFromId "b" backwarded_graph))
+    expected_a_grad = value b
+    expected_b_grad = 0.0
+
+    correct_a_grad = computed_a_grad == expected_a_grad
+    correct_b_grad = computed_b_grad == expected_b_grad
+    passed = correct_a_grad && correct_b_grad
+
 testSimpleBackwardnoB :: Bool
 testSimpleBackwardnoB = passed
   where
@@ -423,12 +445,84 @@ testBackwardMultiOp = passed
     correct_c_grad = computed_c_grad == expected_c_grad
     passed = correct_a_grad && correct_b_grad && correct_c_grad
 
+testFitBatchFrozenLayers :: Bool
+testFitBatchFrozenLayers = passed
+  where
+    shapes :: [Shape]
+    shapes = [(3, 5), (5, 1)]
+    ranges :: [Range]
+    ranges = [(-1, 1), (-1, 1)]
+    model, model_frozen :: Mlp
+    model = fromJust $ newRandomMlp [(shape, range, key, True :: WithBias) | (shape, range, key) <- zip3 shapes ranges [mkStdGen 42, mkStdGen 43]]
+    model_frozen = fromJust $ newMlp ([(if i /= 0 then w else fromJust (newMatrix2d [[nombreNoGrad n | n <- row] | row <- coeffs w]), b) | (i, (w, b)) <- zip [(0 :: Int) ..] (layers model)])
+
+    batch_size :: Int
+    batch_size = 3
+    shape_input, shape_output :: Shape
+    shape_input = (batch_size, fst (head shapes))
+    shape_output = (batch_size, snd (last shapes))
+    range_input_and_labels :: Range
+    range_input_and_labels = (-1, 1)
+    key_input, key_output :: StdGen
+    key_input = mkStdGen 42
+    key_output = mkStdGen 44
+    rand_input :: Matrix2d
+    (rand_input, _) = fromJust $ randMatrix2d "rand_input" shape_input range_input_and_labels key_input
+    rand_labels :: Matrix2d
+    (rand_labels, _) = fromJust $ randMatrix2d "rand_labels" shape_output range_input_and_labels key_output
+    initial_forward :: MlpOutput
+    initial_forward = fromJust $ forwardMlp model rand_input
+    old_squared_errors :: Matrix2d
+    old_squared_errors = fromJust $ meanSquaredError (output_tensor initial_forward) rand_labels
+    old_sumed_squared_errors :: Nombre
+    old_sumed_squared_errors = sumNombre (allParamsFromMatrix old_squared_errors)
+
+    lr = 0.01
+    new_model :: Mlp
+    new_model = fromJust $ fitBatch model (rand_input, rand_labels) lr
+    new_forward :: MlpOutput
+    new_forward = fromJust $ forwardMlp new_model rand_input
+    new_squared_errors :: Matrix2d
+    new_squared_errors = fromJust $ meanSquaredError (output_tensor new_forward) rand_labels
+    new_sumed_squared_errors :: Nombre
+    new_sumed_squared_errors = sumNombre (allParamsFromMatrix new_squared_errors)
+
+    new_model_frozenw1 :: Mlp
+    new_model_frozenw1 = fromJust $ fitBatch model_frozen (rand_input, rand_labels) lr
+    new_forward_frozenw1 :: MlpOutput
+    new_forward_frozenw1 = fromJust $ forwardMlp new_model_frozenw1 rand_input
+    new_squared_errors_frozenw1 :: Matrix2d
+    new_squared_errors_frozenw1 = fromJust $ meanSquaredError (output_tensor new_forward_frozenw1) rand_labels
+    new_sumed_squared_errors_frozenw1 :: Nombre
+    new_sumed_squared_errors_frozenw1 = sumNombre (allParamsFromMatrix new_squared_errors_frozenw1)
+
+    -- checking that all weights are different except the first layer that we froze
+    freezing_worked =
+      and
+        [ and
+            [and [(value n_old == value n_new) == (i == 0) | (n_old, n_new) <- zip row_old row_new_frozen] | (row_old, row_new_frozen) <- zip (coeffs wi_old) (coeffs wi_new_frozen)]
+          | ( i,
+              (wi_old, _),
+              (wi_new_frozen, _)
+              ) <-
+              zip3 [(0 :: Int) ..] (layers model_frozen) (layers new_model_frozenw1)
+        ]
+
+    passed =
+      (value old_sumed_squared_errors > value new_sumed_squared_errors)
+        && (value old_sumed_squared_errors > value new_sumed_squared_errors_frozenw1)
+        && (value new_sumed_squared_errors_frozenw1 > value new_sumed_squared_errors)
+        && freezing_worked
+
 main :: IO ()
 main = do
-  if testSimpleBackwardPassed
+  if testSimpleBackward
     then putStrLn "PASSED test simplebackward"
     else putStrLn "FAILED!!!!! test simplebackward"
-  if testMoreComplexBackwardPassed
+  if testSimpleBackwardNoGrad
+    then putStrLn "PASSED test testSimpleBackwardNoGrad "
+    else putStrLn "FAILED!!!!! test testSimpleBackwardNoGrad "
+  if testMoreComplexBackward
     then putStrLn "PASSED test morecomplexbackward"
     else putStrLn "FAILED!!!!! test morecomplexbackward"
   if testnewMatrix2d
@@ -467,6 +561,6 @@ main = do
   if testBackwardMultiOp
     then putStrLn "PASSED test testBackwardMultiOp "
     else putStrLn "FAILED!!!!! test testBackwardMultiOp "
-  where
-    testSimpleBackwardPassed = testSimpleBackward
-    testMoreComplexBackwardPassed = testMoreComplexBackward
+  if testFitBatchFrozenLayers
+    then putStrLn "PASSED test testFitBatchFrozenLayers "
+    else putStrLn "FAILED!!!!! test testFitBatchFrozenLayers "
