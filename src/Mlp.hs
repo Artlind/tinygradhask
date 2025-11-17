@@ -57,6 +57,7 @@ newMlp ms =
     compatible_dims :: Maybe [LinearLayer]
     compatible_dims = isCompatible ms
 
+-- Forward
 data MlpOutput = MlpOutput
   { hidden_states :: [Matrix2d],
     output_tensor :: Matrix2d

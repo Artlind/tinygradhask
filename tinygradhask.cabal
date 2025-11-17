@@ -84,7 +84,10 @@ test-suite tinygradhask-test
     default-language: Haskell2010
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    other-modules:
+        TestTinygrad
+        TestMatrices
+        TestMlp
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
