@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range, transpose, divideMatrix, linewiseSoftMax, concatMatrices) where
 
 import Common
 import Graphs
@@ -21,6 +21,10 @@ isRectangle rows
   | otherwise = Nothing
   where
     all_rows_equal_len = allSame [length row | row <- rows]
+
+transpose :: Matrix2d -> Matrix2d
+transpose (Matrix2d [[]]) = Matrix2d [[]]
+transpose m = Matrix2d [[row !! i | row <- coeffs m] | i <- [0 .. length (head (coeffs m)) - 1]]
 
 -- Safe constructors
 newMatrix2d :: [[Nombre]] -> Maybe Matrix2d
@@ -67,6 +71,14 @@ randMatrix2d name shape range key = do
   result <- newMatrix2d [[createNombre (name ++ "_" ++ show i ++ "_" ++ show j, rand_numbers !! i !! j) | j <- [0 .. length (rand_numbers !! i) - 1]] | i <- [0 .. length rand_numbers - 1]]
   return (result, new_key)
 
+concatMatrices :: [Matrix2d] -> Maybe Matrix2d
+concatMatrices [] = Nothing
+concatMatrices [m1] = Just m1
+concatMatrices (m1 : m2 : others) = do
+  first_two_concated <- newMatrix2d (coeffs m1 ++ coeffs m2)
+  res <- concatMatrices (first_two_concated : others)
+  Just res
+
 -- Operations
 addMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d
 addMatrices m1 m2
@@ -106,6 +118,19 @@ meanSquaredError m1 m2
   where
     shape1 = (length (coeffs m1), length (head (coeffs m1)))
     shape2 = (length (coeffs m2), length (head (coeffs m2)))
+
+divideMatrix :: Matrix2d -> Double -> Maybe Matrix2d
+divideMatrix m d
+  | d == 0.0 = Nothing
+  | otherwise = Just $ Matrix2d [[n / divisor | n <- row] | row <- coeffs m]
+  where
+    divisor = nombreNoGrad $ createNombre ("constant", d)
+
+linewiseSoftMax :: Matrix2d -> Maybe Matrix2d
+linewiseSoftMax m = do
+  let cs = [softmax row | row <- coeffs m]
+  coes <- sequence cs
+  Just $ Matrix2d coes
 
 -- Gradients stuff
 allParamsFromMatrix :: Matrix2d -> [Nombre]

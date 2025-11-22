@@ -1,4 +1,4 @@
-module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch, Weight, Bias, addBias, WithBias, LinearLayer) where
+module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch, Weight, Bias, addBias, WithBias, LinearLayer, forwardLinear, forwardLinearBatch) where
 
 import qualified Data.HashMap.Strict as HM
 import Graphs
@@ -83,6 +83,24 @@ forwardLinear (w, Just b) inp =
   where
     first_mult :: Maybe Matrix2d
     first_mult = multMatrices inp w
+
+forwardLinearBatch :: LinearLayer -> [Matrix2d] -> Maybe [Matrix2d]
+forwardLinearBatch _ [] = Nothing
+forwardLinearBatch layer [emb1] = do
+  res <- forwardLinear layer emb1
+  Just [res]
+forwardLinearBatch layer (emb1 : others) = do
+  res1 <- forwardLinear layer emb1
+  rest <- forwardLinearBatch layer others
+  Just (res1 : rest)
+
+-- case first_mult of
+--   Nothing -> Nothing
+--   Just t -> do
+--     addBias t (Just b)
+-- where
+--   first_mult :: Maybe Matrix2d
+--   first_mult = multMatrices inp w
 
 forwardMlp :: Mlp -> Matrix2d -> Maybe MlpOutput
 forwardMlp (Mlp []) _ = Just (MlpOutput [] emptyMatrix2d)

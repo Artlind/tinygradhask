@@ -1,4 +1,4 @@
-module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct, tanH, mse, nombreNoGrad) where
+module Nombres (Nombre (..), createNombre, newNombreWithId, sumNombre, dotProduct, tanH, mse, nombreNoGrad, softmax) where
 
 import Common
 
@@ -55,3 +55,20 @@ tanH n = Nombre (tanh (value n)) 0 ("tanh(" ++ nombre_id n ++ ")") [n] TanH (req
 
 mse :: Nombre -> Nombre -> Nombre
 mse n1 n2 = Nombre ((value n1 - value n2) ** 2) 0 ("MSE(" ++ nombre_id n1 ++ "," ++ nombre_id n2) [n1, n2] MSE (requires_grad n1 || requires_grad n2)
+
+softmax :: [Nombre] -> Maybe [Nombre]
+softmax [] = Nothing
+softmax ns =
+  Just $
+    [ Nombre
+        (exp (value n) / s)
+        0
+        ("softmax" ++ "(" ++ nombre_id n ++ "/" ++ (concatMap (++ ",") [nombre_id ni | ni <- ns, nombre_id ni /= nombre_id n]) ++ ")")
+        (n : [ni | ni <- ns, nombre_id ni /= nombre_id n])
+        SoftMax
+        req_grad
+      | n <- ns
+    ]
+  where
+    s = sum [exp (value n) | n <- ns]
+    req_grad = or [requires_grad n | n <- ns]
