@@ -3,6 +3,7 @@ module Main (main) where
 import TestMatrices
 import TestMlp
 import TestTinygrad
+import TestTransformer
 
 main :: IO ()
 main = do
@@ -48,3 +49,6 @@ main = do
   if testFitBatchFrozenLayers
     then putStrLn "PASSED test testFitBatchFrozenLayers "
     else putStrLn "FAILED!!!!! test testFitBatchFrozenLayers "
+  if testnewRandomMultiHeadAttentionHead
+    then putStrLn "PASSED test testnewRandomMultiHeadAttentionHead "
+    else putStrLn "FAILED!!!!! test testnewRandomMultiHeadAttentionHead "

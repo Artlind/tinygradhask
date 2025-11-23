@@ -1,4 +1,4 @@
-module Transformer (AttentionHead, MultiHeadAttention, forwardAttentionHead, forwardMultiHeadAttention, newRandomAttentionHead, newRandomMultiHeadAttentionHead) where
+module Transformer (AttentionHead, MultiHeadAttention (..), forwardAttentionHead, forwardMultiHeadAttention, newRandomAttentionHead, newRandomMultiHeadAttentionHead) where
 
 import Matrices
 import Mlp
