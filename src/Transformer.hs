@@ -90,6 +90,8 @@ forwardMultiHeadAttention :: MultiHeadAttention -> [TokensEmbeddings] -> Maybe [
 forwardMultiHeadAttention layer embs = do
   let all_heads_results = [forwardAttentionHead atthead embs | atthead <- heads layer]
   head_results <- sequence all_heads_results
-  let concated_head_results = [concatMatrices [head_results !! head_number !! token_number | head_number <- [0 .. length (heads layer)]] | token_number <- [0 .. length embs - 1]]
+  let concated_head_results = [concatMatricesColwise [head_results !! head_number !! token_number | head_number <- [0 .. length (heads layer) - 1]] | token_number <- [0 .. length embs - 1]]
   res <- sequence concated_head_results
-  Just res
+  let res_fp = [forwardLinear (final_proj layer) emb | emb <- res]
+  final_res <- sequence res_fp
+  Just final_res

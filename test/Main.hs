@@ -52,3 +52,6 @@ main = do
   if testnewRandomMultiHeadAttentionHead
     then putStrLn "PASSED test testnewRandomMultiHeadAttentionHead "
     else putStrLn "FAILED!!!!! test testnewRandomMultiHeadAttentionHead "
+  if testforwardMultiHeadAttentionHead
+    then putStrLn "PASSED test testforwardMultiHeadAttentionHead"
+    else putStrLn "FAILED!!!!! test testforwardMultiHeadAttentionHead"

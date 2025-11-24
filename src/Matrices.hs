@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range, transpose, divideMatrix, linewiseSoftMax, concatMatrices) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range, transpose, divideMatrix, linewiseSoftMax, concatMatrices, concatMatricesColwise) where
 
 import Common
 import Graphs
@@ -78,6 +78,12 @@ concatMatrices (m1 : m2 : others) = do
   first_two_concated <- newMatrix2d (coeffs m1 ++ coeffs m2)
   res <- concatMatrices (first_two_concated : others)
   Just res
+
+concatMatricesColwise :: [Matrix2d] -> Maybe Matrix2d
+concatMatricesColwise ms = do
+  let transposed_ms = [transpose m | m <- ms]
+  concated_transposed <- concatMatrices transposed_ms
+  Just $ transpose concated_transposed
 
 -- Operations
 addMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d

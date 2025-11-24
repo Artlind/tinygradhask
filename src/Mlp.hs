@@ -94,14 +94,6 @@ forwardLinearBatch layer (emb1 : others) = do
   rest <- forwardLinearBatch layer others
   Just (res1 : rest)
 
--- case first_mult of
---   Nothing -> Nothing
---   Just t -> do
---     addBias t (Just b)
--- where
---   first_mult :: Maybe Matrix2d
---   first_mult = multMatrices inp w
-
 forwardMlp :: Mlp -> Matrix2d -> Maybe MlpOutput
 forwardMlp (Mlp []) _ = Just (MlpOutput [] emptyMatrix2d)
 forwardMlp (Mlp [l]) inp =
