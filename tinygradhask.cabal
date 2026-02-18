@@ -59,7 +59,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Tinygrad, Matrices, Mlp
+    exposed-modules:  Tinygrad, Matrices, Mlp, Transformer
 
     -- Modules included in this library but not exported.
     other-modules: Common, Nombres, Graphs
@@ -88,6 +88,7 @@ test-suite tinygradhask-test
         TestTinygrad
         TestMatrices
         TestMlp
+        TestTransformer
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

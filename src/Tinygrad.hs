@@ -160,6 +160,20 @@ backwardParents n = new_node_parents
                     True
                 else parent_num
             ]
+      SoftMax ->
+        let
+         in [ if requires_grad parent
+                then
+                  Nombre
+                    (value parent)
+                    (grad parent + (grad_child * value parent * (1 - value parent)))
+                    (nombre_id parent)
+                    (parents parent)
+                    (operation parent)
+                    True
+                else parent
+              | parent <- parentsn
+            ]
       where
         parentsn :: [Nombre]
         parentsn = parents n

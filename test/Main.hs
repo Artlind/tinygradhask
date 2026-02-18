@@ -3,6 +3,7 @@ module Main (main) where
 import TestMatrices
 import TestMlp
 import TestTinygrad
+import TestTransformer
 
 main :: IO ()
 main = do
@@ -10,8 +11,8 @@ main = do
     then putStrLn "PASSED test simplebackward"
     else putStrLn "FAILED!!!!! test simplebackward"
   if testSimpleBackwardNoGrad
-    then putStrLn "PASSED test testSimpleBackwardNoGrad "
-    else putStrLn "FAILED!!!!! test testSimpleBackwardNoGrad "
+    then putStrLn "PASSED test testSimpleBackwardNoGrad"
+    else putStrLn "FAILED!!!!! test testSimpleBackwardNoGrad"
   if testMoreComplexBackward
     then putStrLn "PASSED test morecomplexbackward"
     else putStrLn "FAILED!!!!! test morecomplexbackward"
@@ -46,5 +47,11 @@ main = do
     then putStrLn "PASSED test testFitBatch"
     else putStrLn "FAILED!!!!! test testFitBatch"
   if testFitBatchFrozenLayers
-    then putStrLn "PASSED test testFitBatchFrozenLayers "
-    else putStrLn "FAILED!!!!! test testFitBatchFrozenLayers "
+    then putStrLn "PASSED test testFitBatchFrozenLayers"
+    else putStrLn "FAILED!!!!! test testFitBatchFrozenLayers"
+  if testnewRandomMultiHeadAttentionHead
+    then putStrLn "PASSED test testnewRandomMultiHeadAttentionHead"
+    else putStrLn "FAILED!!!!! test testnewRandomMultiHeadAttentionHead"
+  if testforwardMultiHeadAttentionHead
+    then putStrLn "PASSED test testforwardMultiHeadAttentionHead"
+    else putStrLn "FAILED!!!!! test testforwardMultiHeadAttentionHead"
