@@ -32,4 +32,4 @@ testforwardMultiHeadAttentionHead = passed
     batch_size = 4
     sequences = [fst (fromJust (randMatrix2d "inp" ((batch_size, hidden_dim) :: Shape) ((-1, 1) :: Range) key_rand_inputs)) | _ <- [1 .. (sequence_length :: Int)]]
     result = fromJust $ forwardMultiHeadAttention multiheadattention sequences
-    passed = (length (coeffs (head result)) == batch_size) && (length result == sequence_length) && (length (head(coeffs (head result))) == hidden_dim)
+    passed = (length (coeffs (head result)) == batch_size) && (length result == sequence_length) && (length (head (coeffs (head result))) == hidden_dim)

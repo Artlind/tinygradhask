@@ -1,4 +1,4 @@
-module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch, Weight, Bias, addBias, WithBias, LinearLayer, forwardLinear, forwardLinearBatch) where
+module Mlp (Mlp (..), newMlp, forwardMlp, newRandomMlp, MlpOutput (..), fitBatch, Weight, Bias, addBias, WithBias, LinearLayer, forwardLinear, forwardLinearBatch, allParamsFromLinear, updateLinearLayerWithGraph) where
 
 import qualified Data.HashMap.Strict as HM
 import Graphs

@@ -37,8 +37,19 @@ nombreNoGrad :: Nombre -> Nombre
 nombreNoGrad (Nombre a ga n1 pa oa _) = Nombre a ga n1 pa oa False
 
 -- More advanced operations
+-- sumNombre :: [Nombre] -> Nombre
+-- sumNombre nombres = Nombre (sum [value n | n <- nombres]) 0 (concatMap (++ "+") [nombre_id n | n <- nombres]) nombres Sum (or [requires_grad n | n <- nombres])
+
 sumNombre :: [Nombre] -> Nombre
-sumNombre nombres = Nombre (sum [value n | n <- nombres]) 0 (concatMap (++ "+") [nombre_id n | n <- nombres]) nombres Sum (or [requires_grad n | n <- nombres])
+sumNombre nombres =
+  Nombre
+    { value = sum (map value nombres), -- use Haskell’s lazy sum, will evaluate when you actually call value
+      grad = 0,
+      nombre_id = concatMap ((++ "+") . nombre_id) nombres,
+      parents = nombres,
+      operation = Sum,
+      requires_grad = any requires_grad nombres
+    }
 
 dotProduct :: [Nombre] -> [Nombre] -> Maybe Nombre
 dotProduct n1s n2s

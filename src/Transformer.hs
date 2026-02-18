@@ -1,8 +1,12 @@
-module Transformer (AttentionHead, MultiHeadAttention (..), forwardAttentionHead, forwardMultiHeadAttention, newRandomAttentionHead, newRandomMultiHeadAttentionHead) where
+module Transformer (AttentionHead, MultiHeadAttention (..), forwardAttentionHead, forwardMultiHeadAttention, newRandomAttentionHead, newRandomMultiHeadAttentionHead, fitBatchMHA, TokensEmbeddings) where
 
+import qualified Data.HashMap.Strict as HM
+import Data.List (transpose)
+import Graphs
 import Matrices
 import Mlp
 import System.Random (StdGen, splitGen)
+import Tinygrad
 
 -- Structs
 data AttentionHead = AttentionHead
@@ -70,28 +74,83 @@ newRandomMultiHeadAttentionHead (dmodel, dk, dv, masterkey, h) = do
   Just $ MultiHeadAttention heads_proper (head (layers fp))
 
 -- Forwards
+attend :: Double -> TokensEmbeddings -> TokensEmbeddings -> TokensEmbeddings -> Maybe TokensEmbeddings
+attend scale q k v = do
+  dp <- multMatrices q (transposeMatrix k)
+  e <- divideMatrix dp scale
+  sf <- linewiseSoftMax e
+  multMatrices sf v
+
 forwardAttentionHead :: AttentionHead -> [TokensEmbeddings] -> Maybe [TokensEmbeddings]
 forwardAttentionHead layer embs = do
   keys <- forwardLinearBatch (w_keys layer) embs
   values <- forwardLinearBatch (w_vals layer) embs
   queries <- forwardLinearBatch (w_queries layer) embs
-  let dot_prods = [multMatrices query (transpose key) | (query, key) <- zip queries keys]
-  dps <- sequence dot_prods
   dk <- getDk layer
-  let energies = [divideMatrix dp (sqrt (fromIntegral dk)) | dp <- dps]
-  ens <- sequence energies
-  let softmaxed = [linewiseSoftMax energy | energy <- ens]
-  sfs <- sequence softmaxed
-  let results = [multMatrices sf value | (sf, value) <- zip sfs values]
-  out <- sequence results
-  Just out
+  let scale = sqrt (fromIntegral dk)
+  sequenceA (zipWith3 (attend scale) queries keys values)
 
 forwardMultiHeadAttention :: MultiHeadAttention -> [TokensEmbeddings] -> Maybe [TokensEmbeddings]
 forwardMultiHeadAttention layer embs = do
-  let all_heads_results = [forwardAttentionHead atthead embs | atthead <- heads layer]
-  head_results <- sequence all_heads_results
-  let concated_head_results = [concatMatricesColwise [head_results !! head_number !! token_number | head_number <- [0 .. length (heads layer) - 1]] | token_number <- [0 .. length embs - 1]]
-  res <- sequence concated_head_results
-  let res_fp = [forwardLinear (final_proj layer) emb | emb <- res]
-  final_res <- sequence res_fp
-  Just final_res
+  head_results <- sequenceA [forwardAttentionHead atthead embs | atthead <- heads layer]
+  let per_token_results = transpose head_results
+  concated_head_results <-
+    sequenceA
+      [ concatMatricesColwise token_heads
+        | token_heads <- per_token_results
+      ]
+  res <- sequenceA [forwardLinear (final_proj layer) emb | emb <- concated_head_results]
+  Just res
+
+-- Fit
+allParamsFromAH :: AttentionHead -> [Nombre]
+allParamsFromAH model = concat [allParamsFromLinear (w_keys model), allParamsFromLinear (w_vals model), allParamsFromLinear (w_queries model)]
+
+allParamsFromMHA :: MultiHeadAttention -> [Nombre]
+allParamsFromMHA model = concat (allParamsFromLinear (final_proj model) : [allParamsFromAH he | he <- heads model])
+
+updateAHwithGraph :: AttentionHead -> Graph -> AttentionHead
+updateAHwithGraph model graph = new_model
+  where
+    new_model = AttentionHead (updateLinearLayerWithGraph (w_keys model) graph) (updateLinearLayerWithGraph (w_vals model) graph) (updateLinearLayerWithGraph (w_queries model) graph)
+
+updateMHAwithGraph :: MultiHeadAttention -> Graph -> MultiHeadAttention
+updateMHAwithGraph model graph = new_model
+  where
+    new_model = MultiHeadAttention [updateAHwithGraph h graph | h <- heads model] (updateLinearLayerWithGraph (final_proj model) graph)
+
+fitBatchMHA ::
+  MultiHeadAttention ->
+  ([TokensEmbeddings], [TokensEmbeddings]) ->
+  Double ->
+  Maybe MultiHeadAttention
+fitBatchMHA model (inp, labels) lr =
+  case forwardMultiHeadAttention model inp of
+    Nothing -> Nothing
+    Just ot ->
+      do
+        labs <- concatMatrices labels
+        ots <- concatMatrices ot
+        case meanSquaredError ots labs of
+          Nothing -> Nothing
+          Just mat ->
+            let sum_loss =
+                  sumNombre (allParamsFromMatrix mat)
+
+                graph =
+                  Graph
+                    ( HM.fromList
+                        [ (nombre_id node, node)
+                          | node <- sum_loss : allParamsFromMHA model
+                        ]
+                    )
+
+                backwarded_graph =
+                  backward (nombre_id sum_loss) graph
+
+                grad_steped_graph =
+                  makeGradStep backwarded_graph lr
+
+                new_model =
+                  updateMHAwithGraph model grad_steped_graph
+             in Just new_model

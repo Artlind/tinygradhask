@@ -1,4 +1,4 @@
-module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range, transpose, divideMatrix, linewiseSoftMax, concatMatrices, concatMatricesColwise) where
+module Matrices (Matrix2d, coeffs, newMatrix2d, randMatrix2d, addMatrices, multMatrices, allParamsFromMatrix, emptyMatrix2d, applyTanh, suffixParamsMatrix2d, meanSquaredError, updateMatrixWithGraph, Shape, Range, transposeMatrix, divideMatrix, linewiseSoftMax, concatMatrices, concatMatricesColwise) where
 
 import Common
 import Graphs
@@ -22,9 +22,9 @@ isRectangle rows
   where
     all_rows_equal_len = allSame [length row | row <- rows]
 
-transpose :: Matrix2d -> Matrix2d
-transpose (Matrix2d [[]]) = Matrix2d [[]]
-transpose m = Matrix2d [[row !! i | row <- coeffs m] | i <- [0 .. length (head (coeffs m)) - 1]]
+transposeMatrix :: Matrix2d -> Matrix2d
+transposeMatrix (Matrix2d [[]]) = Matrix2d [[]]
+transposeMatrix m = Matrix2d [[row !! i | row <- coeffs m] | i <- [0 .. length (head (coeffs m)) - 1]]
 
 -- Safe constructors
 newMatrix2d :: [[Nombre]] -> Maybe Matrix2d
@@ -81,9 +81,9 @@ concatMatrices (m1 : m2 : others) = do
 
 concatMatricesColwise :: [Matrix2d] -> Maybe Matrix2d
 concatMatricesColwise ms = do
-  let transposed_ms = [transpose m | m <- ms]
+  let transposed_ms = [transposeMatrix m | m <- ms]
   concated_transposed <- concatMatrices transposed_ms
-  Just $ transpose concated_transposed
+  Just $ transposeMatrix concated_transposed
 
 -- Operations
 addMatrices :: Matrix2d -> Matrix2d -> Maybe Matrix2d
